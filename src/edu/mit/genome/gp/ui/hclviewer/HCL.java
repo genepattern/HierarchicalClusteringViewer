@@ -36,8 +36,8 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 	JPanel pink_geneTree_sampleTreePanel = new SrollablePanel();
 
 	JScrollPane scrollPane;
-	final int INITIAL_X_PIX_PER_UNIT = 4;
-	final int INITIAL_Y_PIX_PER_UNIT = 4;
+	final int INITIAL_X_PIX_PER_UNIT = 8;
+	final int INITIAL_Y_PIX_PER_UNIT = 8;
 	Dataset matrix;
 
 	JPanel headerPanel = new JPanel();
@@ -150,7 +150,7 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 		scrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
 		scrollPane.setViewportView(pink_geneTree_sampleTreePanel);
 		scrollPane.revalidate();
-
+		scrollPane.getViewport().setBackground(Color.white);
 		scrollPane.setColumnHeaderView(topPanel);
 		/*
 		 *  following does not work under OS X 1.4
