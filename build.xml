@@ -89,8 +89,7 @@ name="GenePattern">
 		<fileset dir="../../build/">
                     <include name="gp-common.jar"/>
 		</fileset>  
-
-
+                <fileset dir="." includes="*.pdf"/>
 	</zip>
 	<antcall target="postzip"/>
     </target>
