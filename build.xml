@@ -3,8 +3,9 @@
         <!ENTITY zip_targets SYSTEM "file:../ziptargets.xml">
  	  <!ENTITY common SYSTEM "file:../commontargets.xml">
 ]>
-<!-- Ant build file --><project basedir="." default="package"
-name="HierarchicalClusterViewer">
+
+<project basedir="." default="package" name="HierarchicalClusterViewer">
+
  &zip_targets;
  &common;
 
@@ -12,8 +13,7 @@ name="HierarchicalClusterViewer">
         
         <property  name="appfile" value="hclviewer.jar"/>
         <property  name="inclds" value="edu/mit/"/>
-       
-        <property name="manifest" value="gp.mf"/>
+        <property  name="manifest" value="gp.mf"/>
         <property  name="initials" value="gp"/>
         <property  name="hcvlibpath"  value="lib/" />
 	
@@ -24,11 +24,6 @@ name="HierarchicalClusterViewer">
           </fileset>
 
 	  <fileset dir="${hcvlibpath}">
-             <include name="*.jar"/>
-             <include name="*.zip"/>
-          </fileset>
-	  
-	  <fileset dir="../../build/">
              <include name="*.jar"/>
              <include name="*.zip"/>
           </fileset>
