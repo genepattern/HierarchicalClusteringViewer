@@ -244,7 +244,7 @@ public class CdtParser {
                 }
             }
 				
-				rowNames.add(ID);
+				rowNames.add(GID);
 				rowDescriptions.add(Name);
 				
 				int columnIndex = 0;
@@ -296,6 +296,7 @@ public class CdtParser {
 		matrix.setRowNames(rowNames);
 		matrix.setRowDescriptions(rowDescriptions);
 	
+		
 		if(gtrFileName!=null) {
 			geneTreeRoot = parseGtrOrAtr(gtrFileName, true, availableRowNodes);
 		}
