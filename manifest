@@ -43,4 +43,4 @@ quality=production
 serializedModel=
 taskType=Visualizer
 userid=GenePattern
-version=
+version=Adds ability to save dendrograms as part of saved image
