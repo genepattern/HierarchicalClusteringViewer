@@ -244,7 +244,7 @@ public class CdtParser {
                 }
             }
 				
-				rowNames.add(GID);
+				rowNames.add(ID);
 				rowDescriptions.add(Name);
 				
 				int columnIndex = 0;
@@ -286,7 +286,6 @@ public class CdtParser {
 				TreeNode node = new TreeNode(null, null, 1, name);
 				node.position = i;
 				String aid = st.nextToken();
-			//	System.out.println("created " + aid);
 				availableColumnNodes.put(aid, node);
 			}
 		}
