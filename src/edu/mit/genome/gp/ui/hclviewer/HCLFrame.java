@@ -30,6 +30,17 @@ public class HCLFrame extends JFrame {
 		try {
 			// saving image requires usually requires 512MB of memory
 			final BufferedImage snaphotImage = hcl.snapshot();
+		/*	JFrame f= new JFrame();
+			JPanel p = new JPanel() {
+				public void paintComponent(Graphics g) {
+					g.drawImage(snaphotImage, 0, 0, null);
+				}
+			};
+			f.getContentPane().add(p);
+			f.setSize(400,400);
+			f.show();
+			*/
+			
 			ij.ImagePlus ip = new ij.ImagePlus();
 			ip.setImage(snaphotImage);
 			ij.io.FileSaver fs = new ij.io.FileSaver(ip);

@@ -16,7 +16,6 @@ import javax.swing.event.*;
 import edu.mit.genome.dataobj.jg.*;
 /**
  *  Issues: -when at bottom of scroll pane and zoom out, image is too high, currently using hack to fix this -Add
- *  another class HCL that is composite of pinkogram and dendrograms, pinkogram
  *  should just draw matrix, gene names, and sample names -preview panel -if normalize by row, then should have separate
  *  header for each row
  *
@@ -531,37 +530,19 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			geneTreeWidth = geneTree.getPreferredSize().width;
 			width += geneTreeWidth;
 		}
-		int height = this.getPreferredSize().height;
-		int headerHeight = header.getPreferredSize().height;
-		height += headerHeight;
-		final BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);//TYPE_3BYTE_BGR
+		int imageHeight = getIntYPixPerUnit() * ny;
+		int headerHeight = headerPanel.getHeight();
+		imageHeight += headerHeight;
+		
+		final BufferedImage image = new BufferedImage(width, imageHeight, BufferedImage.TYPE_INT_ARGB);//TYPE_3BYTE_BGR
 		Graphics2D g = image.createGraphics();
 		g.setColor(Color.white);
 		g.fillRect(0, 0, image.getWidth(), image.getHeight());
 
-		/*
-		    JPanel temp =
-		    new JPanel() {
-		    public void paintComponent(Graphics g) {
-		    super.paintComponent(g);
-		    g.drawImage(image, 0, 0, null);
-		    }
-		    };
-		    pink_geneTree_sampleTreePanel.paint(g);
-		    JFrame f = new JFrame();
-		    f.getContentPane().add(temp);
-		    f.show();
-		  */
 		headerPanel.paint(g);// header panel contains sample tree and sample names
-		g.translate(0, headerPanel.getHeight());
+		g.translate(0, headerHeight);
+		pinkOGramAndGeneNamesPanel.paint(g);
 		g.dispose();
-
-		/*
-		    Component comp = pink_geneTree_sampleTreePanel.getTopLevelAncestor();
-		    boolean buffered = RepaintManager.currentManager(comp).isDoubleBufferingEnabled();
-		    RepaintManager.currentManager(comp).setDoubleBufferingEnabled(false);
-		    RepaintManager.currentManager(comp).setDoubleBufferingEnabled(buffered);
-		  */
 		return image;
 	}
 
