@@ -6,10 +6,17 @@ import java.awt.*;
 import java.awt.image.*;
 import javax.swing.*;
 import java.io.*;
+import com.sun.media.jai.codec.ImageEncodeParam;
+import com.sun.media.jai.codec.JPEGEncodeParam;
+import javax.media.jai.JAI;
+import java.awt.image.BufferedImage;
 
-
+/**
+ *@author    Joshua Gould
+ */
 public class HCLFrame extends JFrame {
 	HCL hcl;
+
 
 	public HCLFrame(HCL hcl) {
 		this.hcl = hcl;
@@ -25,69 +32,70 @@ public class HCLFrame extends JFrame {
 	}
 
 
-//
-	private void showSaveImageDialog() {
-		JOptionPane.showMessageDialog(this, "Please be patient. Creating the image can take several minutes.");
-		try {
-			// saving image requires usually requires 512MB of memory
-			final BufferedImage snaphotImage = hcl.snapshot();
-		/*	JFrame f= new JFrame();
-			JPanel p = new JPanel() {
-				public void paintComponent(Graphics g) {
-					g.drawImage(snaphotImage, 0, 0, null);
-				}
-			};
-			f.getContentPane().add(p);
-			f.setSize(400,400);
-			f.show();
-			*/
-			
-			ij.ImagePlus ip = new ij.ImagePlus();
-			ip.setImage(snaphotImage);
-			ij.io.FileSaver fs = new ij.io.FileSaver(ip);
-			fs.saveAsTiff();
-		} catch(java.lang.OutOfMemoryError e) {
-			JOptionPane.showMessageDialog(this, "Out of memory. Try allocating more memory or try using a smaller pixel size.");
+	void showSaveImageDialog() {
+
+		if((Double.parseDouble(System.getProperty("java.specification.version"))) <
+				1.4) {
+			JOptionPane.showMessageDialog(this, "Java 1.4 is required to save an image.");
+			return;
 		}
-		// fs.saveAsBmp(); also works, gif and jpeg don't
-		/*
-		    final JFileChooser chooser = new JFileChooser(System.getProperty("user.dir"));
-		    chooser.setAcceptAllFileFilterUsed(false);
-		    /chooser.setCurrentDirectory(new File("Data"));
-		    /		chooser.addChoosableFileFilter(new BMPFileFilter());
-		    chooser.addChoosableFileFilter(new JPGFileFilter());
-		    chooser.addChoosableFileFilter(new PNGFileFilter());
-		    chooser.addChoosableFileFilter(new TIFFFileFilter());
-		    int chooserState = chooser.showSaveDialog(null);
-		    if(chooserState == JFileChooser.APPROVE_OPTION) {
-		    final File fFile = chooser.getSelectedFile();
-		    if(fFile.exists()) {
-		    int selected = JOptionPane.showConfirmDialog(this,
-		    "A file named " + fFile.getName() + " already exists. Are you sure you want to replace it?",
-		    "Warning", JOptionPane.YES_NO_CANCEL_OPTION);
-		    if(selected != JOptionPane.YES_OPTION) {
-		    return;
-		    }
-		    }
-		    *	final String fFormat = ((ImageFileFilter) chooser.getFileFilter()).getFileFormat();
-		    final ImageEncodeParam fParam = ((ImageFileFilter) chooser.getFileFilter()).getImageEncodeParam();
-		    try {
-		    Thread thread =
-		    new Thread() {
-		    public void run() {
-		    JAI.create("filestore", fImage, fFile.getPath(), fFormat, fParam);
-		    JOptionPane.showMessageDialog(null, "Your image was saved successfully.");
-		    }
-		    };
-		    /  thread.setPriority(Thread.MIN_PRIORITY);
-		    thread.start();
-		    } catch(Exception e) {
-		    /Manager.message(getFrame(), e);
-		    }
-		    }
-		 */
+
+		JFileChooser fc = new JFileChooser();
+		fc.setAcceptAllFileFilterUsed(false);
+		fc.addChoosableFileFilter(new MyFileFilter(new String[]{"bmp"}, "BMP image", "BMP"));
+		fc.addChoosableFileFilter(new MyFileFilter(new String[]{"jpeg", "jpg"}, "JPEG image", "JPEG"));
+		fc.addChoosableFileFilter(new MyFileFilter(new String[]{"png"}, "PNG image", "PNG"));
+		fc.addChoosableFileFilter(new MyFileFilter(new String[]{"tiff"}, "TIFF image", "TIFF"));
+
+		if(fc.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+			final File f = fc.getSelectedFile();
+			if(f.exists()) {
+				String message = "An item named " + f.getName() + " already exists in this location. Do you want to replace it with the one that you are saving?";
+				if(JOptionPane.showOptionDialog(this, message, null, JOptionPane.YES_NO_OPTION, JOptionPane.WARNING_MESSAGE, null, new Object[]{"Replace", "Cancel"}, "Cancel") != JOptionPane.YES_OPTION) {
+					return;
+				}
+			}
+			final String outputFileFormat = ((MyFileFilter) fc.getFileFilter()).getFileFormat();
+
+				new Thread() {
+					public void run() {
+						BufferedImage bufferedImage = null;
+						try {
+							bufferedImage = hcl.snapshot();
+						} catch(OutOfMemoryError o) {
+							JOptionPane.showMessageDialog(HCLFrame.this, "Not enough memory available to create image.", "Error", JOptionPane.ERROR_MESSAGE);
+							return;
+						}
+
+						ImageEncodeParam fParam = null;
+						if(outputFileFormat.equalsIgnoreCase("jpeg")) {
+							JPEGEncodeParam jpegParam = new JPEGEncodeParam();
+							jpegParam.setQuality(1.0f);
+							fParam = jpegParam;
+						} else if(outputFileFormat.equalsIgnoreCase("png")) {
+							fParam = new com.sun.media.jai.codec.PNGEncodeParam.RGB();
+						} else if(outputFileFormat.equalsIgnoreCase("tiff")) {
+							com.sun.media.jai.codec.TIFFEncodeParam param = new com.sun.media.jai.codec.TIFFEncodeParam();
+							param.setCompression(com.sun.media.jai.codec.TIFFEncodeParam.COMPRESSION_NONE);
+							fParam = param;
+						} else if(outputFileFormat.equalsIgnoreCase("bmp")) {
+							fParam = new com.sun.media.jai.codec.BMPEncodeParam();
+						}
+						try {
+							JAI.create("filestore", bufferedImage, f.getCanonicalPath(), outputFileFormat, fParam);
+						} catch(Throwable x) {
+							JOptionPane.showMessageDialog(HCLFrame.this, "An error occurred while saving the image.", "Error", JOptionPane.ERROR_MESSAGE);
+						}
+					}
+				}.start();
+		}
 	}
 
+
+
+	/**
+	 *@author    Joshua Gould
+	 */
 	class MenuBar extends JMenuBar {
 		JMenu displayMenu = new JMenu("Display");
 		JMenu fileMenu = new JMenu("File");
@@ -95,6 +103,7 @@ public class HCLFrame extends JFrame {
 		JMenu colorResponseMenu = new JMenu("Color Response");
 
 		JMenuItem customAbsColorMenuItem;
+
 
 		public MenuBar() {
 
@@ -137,6 +146,7 @@ public class HCLFrame extends JFrame {
 			add(displayMenu);
 		}
 
+
 		private void createSizeMenu() {
 
 			JMenuItem zoomInMenuItem = new JMenuItem("Zoom in");
@@ -164,8 +174,9 @@ public class HCLFrame extends JFrame {
 
 		}
 
+
 		private void createFileMenu() {
-			JMenuItem saveImageMenuItem = new JMenuItem("Save Image");
+			JMenuItem saveImageMenuItem = new JMenuItem("Save Image...");
 			//	saveImageMenuItem.setEnabled(false);
 			saveImageMenuItem.addActionListener(
 				new ActionListener() {
@@ -176,6 +187,7 @@ public class HCLFrame extends JFrame {
 
 			fileMenu.add(saveImageMenuItem);
 		}
+
 
 		private void createColorSchemeMenu() {
 			JMenu colorSchemeMenu = new JMenu("Normalization");
@@ -216,8 +228,7 @@ public class HCLFrame extends JFrame {
 				new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
 						AbsoluteColorConverter conv = (AbsoluteColorConverter) hcl.colorConverter;
-						
-						
+
 						AbsoluteColorSchemeSelectionDialog dialog = new AbsoluteColorSchemeSelectionDialog(HCLFrame.this, conv.getMinColor(), conv.getMaxColor(), conv.getNeutralColor());
 						int result = dialog.showModal();
 						if(result == JOptionPane.OK_OPTION) {
@@ -258,7 +269,7 @@ public class HCLFrame extends JFrame {
 					public void actionPerformed(ActionEvent e) {
 						hcl.setColorConverter(new RowColorConverter(ColorResponse.LOG, hcl.getMatrix()));
 						hcl.repaint();
-		
+
 					}
 				});
 
@@ -267,6 +278,47 @@ public class HCLFrame extends JFrame {
 			displayMenu.add(colorResponseMenu);
 		}
 
+	}
+
+
+	/**
+	 *@author    Joshua Gould
+	 */
+	static class MyFileFilter extends javax.swing.filechooser.FileFilter {
+		java.util.List extensions;
+		String fileFormat, description;
+
+
+		public MyFileFilter(String[] extensions, String description, String fileFormat) {
+			this.extensions = java.util.Arrays.asList(extensions);
+			this.description = description;
+			this.fileFormat = fileFormat;
+
+		}
+
+
+		public boolean accept(File f) {
+			if(f.isDirectory()) {
+				return true;
+			}
+			String name = f.getName();
+			int dotIndex = name.lastIndexOf(".");
+			if(dotIndex > 0) {
+				String ext = name.substring(dotIndex + 1, name.length());
+				return extensions.contains(ext.toLowerCase());
+			}
+			return false;
+		}
+
+
+		public String getDescription() {
+			return description;
+		}
+
+
+		public String getFileFormat() {
+			return fileFormat;
+		}
 	}
 }
 

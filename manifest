@@ -2,7 +2,7 @@
 #Thu May 13 14:08:42 EDT 2004
 author=Joshua Gould
 className=edu.mit.wi.omnigene.service.analysis.genepattern.GenePatternAnalysisTask
-commandLine=<java> <java_flags> -cp <libdir>gp-common.jar<path.separator><libdir>hclviewer.jar<path.separator><libdir>jargs.jar<path.separator><libdir>ij.jar<path.separator><libdir>colt.jar<path.separator><libdir>trove.jar<path.separator><libdir>file_support.jar edu.mit.genome.gp.ui.hclviewer.CdtParser <cdt.filename> <gtr.filename> <atr.filename>
+commandLine=<java> <java_flags> -cp <libdir>gp-common.jar<path.separator><libdir>hclviewer.jar<path.separator><libdir>jargs.jar<path.separator><libdir>colt.jar<path.separator><libdir>trove.jar<path.separator><libdir>file_support.jar<path.separator><libdir>jai_codec.jar<path.separator><libdir>jai_core.jar edu.mit.genome.gp.ui.hclviewer.CdtParser <cdt.filename> <gtr.filename> <atr.filename>
 cpuType=any
 description=Hierarchical clustering viewer that reads in Eisen's cdt, atr, and gtr files. A detailed description of these formats is available from http\://microarray.ccgb.umn.edu/smd/html/MicroArray/help/formats.shtml
 JVMLevel=1.3
