@@ -16,6 +16,7 @@ public class HCLFrame extends JFrame {
 		setJMenuBar(new MenuBar());
 		Container c = getContentPane();
 		c.setBackground(Color.white);
+		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		c.add(hcl.getComponent(), BorderLayout.CENTER);
 		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
 		setSize((int) (screen.width * .60), (int) (screen.height * .80));
