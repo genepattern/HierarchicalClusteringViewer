@@ -52,6 +52,7 @@
 		deprecation="true" 
 		destdir="." 
 		optimize="false" 
+		target="1.3"
 		proceed="false">
 	    <classpath refid="library.classpath"/>
 	</javac>
