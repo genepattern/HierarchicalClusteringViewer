@@ -43,7 +43,7 @@ public class HeatMap {
 		int columnWidth = 8;
 		int rowWidth = 8;
 
-		for(int i = 2; i < args.length; i++) { // 1st arg is input file name, 2nd arg is output file name, 3rd arg is format
+		for(int i = 3; i < args.length; i++) { // 0th arg is input file name, 1st arg is output file name, 2nd arg is format
 			if(args[i].equals("-cw")) {
 				columnWidth = Integer.parseInt(args[++i]);
 			} else if(args[i].equals("-rw")) {
