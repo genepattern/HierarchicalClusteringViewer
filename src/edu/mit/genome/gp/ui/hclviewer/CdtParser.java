@@ -58,7 +58,7 @@ public class CdtParser {
 		} catch(Exception e) {
 			System.err.println("Parsing of cdt file failed.");
 			e.printStackTrace();
-			System.exit(2);
+			System.exit(0);
 		}
 
 		Dendrogram geneTree = null;
@@ -68,8 +68,7 @@ public class CdtParser {
 				geneTree.setLeafNodeSpacing(0, 4);
 			} catch(Exception e) {
 				System.err.println("Parsing of gtr file failed.");
-				e.printStackTrace();
-				System.exit(2);
+				System.exit(0);
 			}
 		}
 		
@@ -80,8 +79,7 @@ public class CdtParser {
 				sampleTree.setLeafNodeSpacing(0, 4);
 			} catch(Exception e) {
 				System.err.println("Parsing of atr file failed.");
-				e.printStackTrace();
-				System.exit(2);
+				System.exit(0);
 			}
 		}
 		HCL p = new HCL(cdtParser.matrix, cdtParser.minValue, cdtParser.maxValue, sampleTree, geneTree);
@@ -240,7 +238,7 @@ public class CdtParser {
 						//  System.out.println("created " + GID);
                 }
                 catch (NumberFormatException e) {
-						 e.printStackTrace();
+					
                 }
             }
 				

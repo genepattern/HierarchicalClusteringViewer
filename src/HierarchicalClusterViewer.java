@@ -102,12 +102,12 @@ public class HierarchicalClusterViewer {
          option.showInternalMessageDialog(desktop, 
                                           "There was a problem loading these files.", 
                                           "Error", JOptionPane.ERROR_MESSAGE);
-         e.printStackTrace();
+     
          return;
       }
        catch(OutOfMemoryError error) {
          //print stacktrace for debugging
-         error.printStackTrace();
+       
          desktop.getGlassPane().setVisible(false);
          //show error dialog
          JOptionPane option=new JOptionPane();
