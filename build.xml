@@ -73,7 +73,7 @@
 
 	<antcall target="prezip"/>
 
-	<zip destfile="../build/${ant.project.name}.zip" whenempty="fail">
+	<zip destfile="../build/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
 		<fileset dir="." includes="manifest, ${appfile}, version.txt"/>
 		<fileset dir="${hcvlibpath}"/>
 		<fileset dir="${libpath}">
