@@ -553,7 +553,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 // size of header and gene tree
 
 
-	public BufferedImage heatMapSnapshot() {
+	public BufferedImage heatMapSnapshot(org.apache.batik.transcoder.image.ImageTranscoder transcoder) {
 		int heatMapWidth = getIntXPixPerUnit() * nx;
 		int heatMapHeight = getIntYPixPerUnit() * ny;
 
@@ -566,8 +566,8 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		totalHeight += 100;
 		// for sample names
 
-		final BufferedImage image = new BufferedImage(totalWidth, totalHeight, BufferedImage.TYPE_INT_ARGB);
-		//TYPE_3BYTE_BGR
+		final BufferedImage image =transcoder.createImage(totalWidth, totalHeight); // new BufferedImage(totalWidth, totalHeight, BufferedImage.TYPE_INT_ARGB);
+		
 		Graphics2D g = image.createGraphics();
 
 		g.setColor(Color.white);

@@ -4,6 +4,7 @@ import edu.mit.genome.dataobj.jg.*;
 import java.awt.image.BufferedImage;
 import java.awt.*;
 import javax.swing.*;
+import java.io.*;
 
 public class HeatMap {
 	public static void main(String[] args) throws Exception {
@@ -22,11 +23,31 @@ public class HeatMap {
 			}
 		}
 		final HCL hcl = new HCL(d, min, max, null, null);
-		
 		hcl.zoomIn();
-		
+		hcl.zoomIn();
+		org.apache.batik.transcoder.image.ImageTranscoder transcoder = null; 
+        // createImage();
+        String outputFileName = args[1];
+        String outputFormat = args[2];
+        if(outputFormat.equals("png")) {
+        	transcoder = new org.apache.batik.transcoder.image.PNGTranscoder();
+			if(!outputFileName.toLowerCase().endsWith(".png")) {
+				outputFileName += ".png";
+			}
+		} else {
+			transcoder = new org.apache.batik.transcoder.image.JPEGTranscoder();
+			transcoder.addTranscodingHint(org.apache.batik.transcoder.image.JPEGTranscoder.KEY_QUALITY, new Float(.8));
+        	if(!outputFileName.toLowerCase().endsWith(".jpg") && !outputFileName.toLowerCase().endsWith(".jpeg")) {
+				outputFileName += ".jpg";
+			}
+		}
+		BufferedImage snapshotImage = hcl.heatMapSnapshot(transcoder);
+        FileOutputStream fos = new FileOutputStream(outputFileName);
+        org.apache.batik.transcoder.TranscoderOutput out = new org.apache.batik.transcoder.TranscoderOutput(fos);
+        transcoder.writeImage(snapshotImage, out);
+        fos.close();
 		// saving image requires usually requires at least 512MB of memory
-		BufferedImage snaphotImage = hcl.heatMapSnapshot();
+	/*	BufferedImage snaphotImage = hcl.heatMapSnapshot();
 		
 		ij.ImagePlus ip = new ij.ImagePlus();
 		ip.setImage(snaphotImage);
@@ -51,7 +72,7 @@ public class HeatMap {
 			}
 			fs.saveAsJpeg(outputFileName);
 		}
-	
+		*/
 		System.exit(1);
 	}
 	
