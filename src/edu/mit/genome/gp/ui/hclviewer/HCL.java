@@ -636,8 +636,15 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 		Graphics2D g = image.createGraphics();
 		g.setColor(Color.white);
 		g.fillRect(0, 0, image.getWidth(), image.getHeight());
-
-		headerPanel.paint(g);
+		
+		if(geneTree!=null) {
+			g.translate(geneTree.getWidth(), 0);
+			headerPanel.paint(g);
+			g.translate(-geneTree.getWidth(), 0);
+		} else {
+			headerPanel.paint(g);
+		}
+		
 		//topPanel.paint(g);
 		// header panel contains sample tree and sample names
 		g.translate(0, headerHeight);
