@@ -6,7 +6,7 @@ import java.awt.*;
 import javax.swing.*;
 import java.io.*;
 
-public class HeatMap {
+public class HeatMapImage {
 
 	public static void main(String[] args) throws Exception {
 
@@ -23,9 +23,9 @@ public class HeatMap {
 				max = value > max ? value : max;
 			}
 		}
-		final HCL hcl = new HCL(d, min, max, null, null);
+		
 		org.apache.batik.transcoder.image.ImageTranscoder transcoder = null;
-		// createImage();
+		
 		String outputFileName = args[1];
 		String outputFormat = args[2];
 		if(outputFormat.equals("png")) {
@@ -42,18 +42,25 @@ public class HeatMap {
 		}
 		int columnWidth = 8;
 		int rowWidth = 8;
-
+		String normalization = "row";
 		for(int i = 3; i < args.length; i++) { // 0th arg is input file name, 1st arg is output file name, 2nd arg is format
 			if(args[i].equals("-cw")) {
 				columnWidth = Integer.parseInt(args[++i]);
 			} else if(args[i].equals("-rw")) {
 				rowWidth = Integer.parseInt(args[++i]);
+			} else if(args[i].equals("-norm")) { 
+				normalization = args[++i];
+				if(!normalization.equals("none") && !normalization.equals("row")) {
+					System.err.println("Invalid normalization");
+					System.exit(1);
+				}
 			} else {
 				System.err.println("unknown option " + args[i]);
 				System.exit(1);
 			}
 		}
-		BufferedImage snapshotImage = hcl.heatMapSnapshot(transcoder, columnWidth, rowWidth);
+			
+		BufferedImage snapshotImage = HCL.heatMapSnapshot(d, normalization, min, max, transcoder, columnWidth, rowWidth);
 		FileOutputStream fos = new FileOutputStream(outputFileName);
 		org.apache.batik.transcoder.TranscoderOutput out = new org.apache.batik.transcoder.TranscoderOutput(fos);
 		transcoder.writeImage(snapshotImage, out);

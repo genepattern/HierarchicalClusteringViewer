@@ -568,23 +568,26 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 // size of header and gene tree
 
 
-	public BufferedImage heatMapSnapshot(org.apache.batik.transcoder.image.ImageTranscoder transcoder, int columnWidth, int rowWidth) {
+	public static BufferedImage heatMapSnapshot(Dataset d, String normalization, double min, double max, org.apache.batik.transcoder.image.ImageTranscoder transcoder, int columnWidth, int rowWidth) {
 		BufferedImage tempImage =transcoder.createImage(2, 2);
 		Graphics tempGraphics = tempImage.getGraphics();
-		
-		int oldXPixPerUnit = getXPixPerUnitAsInt();
-		int oldYPixPerUnit = getYPixPerUnitAsInt();
-		
-		setXPixPerUnit(columnWidth);
-		setYPixPerUnit(rowWidth);
-		updateSize();
-		int heatMapWidth = getXPixPerUnitAsInt() * nx;
-		int heatMapHeight = getYPixPerUnitAsInt() * ny;
+		HCL heatMap = new HCL(d, min, max, null, null);
+		if(normalization.equals("row")) {
+			heatMap.setColorConverter(new RowColorConverter(ColorResponse.LINEAR, heatMap.getMatrix()));
+		} else if(normalization.equals("none")) {
+			heatMap.setColorConverter(new AbsoluteColorConverter(Color.blue, Color.red, Color.black, heatMap.getMatrix(), heatMap.getMinValue(), heatMap.getMaxValue()));
+		}
+
+		heatMap.setXPixPerUnit(columnWidth);
+		heatMap.setYPixPerUnit(rowWidth);
+		heatMap.updateSize();
+		int heatMapWidth = heatMap.getXPixPerUnitAsInt() * heatMap.nx;
+		int heatMapHeight = heatMap.getYPixPerUnitAsInt() * heatMap.ny;
 		int totalHeight = heatMapHeight;
-		int sampleNamesHeight = sampleNamesDrawer.updateSize(tempGraphics, heatMapWidth);
+		int sampleNamesHeight = heatMap.sampleNamesDrawer.updateSize(tempGraphics, heatMapWidth);
 		totalHeight += sampleNamesHeight;
 		int totalWidth = heatMapWidth;
-		totalWidth +=  geneNamesDrawer.updateSize(tempGraphics);
+		totalWidth +=  heatMap.geneNamesDrawer.updateSize(tempGraphics);
 		tempGraphics.dispose();
 
 		BufferedImage image =transcoder.createImage(totalWidth, totalHeight); // new BufferedImage(totalWidth, totalHeight, BufferedImage.TYPE_INT_ARGB);
@@ -596,18 +599,16 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 
 		g.setColor(Color.black);
 		java.awt.geom.AffineTransform previousTransform = g.getTransform();
-		sampleNamesDrawer.draw(g); // changes transform
+		heatMap.sampleNamesDrawer.draw(g); // changes transform
 		g.setTransform(previousTransform);
 		g.translate(0, sampleNamesHeight);
-		this.draw(g);
+		heatMap.draw(g);
 		g.translate(heatMapWidth, 0);
 		g.setColor(Color.black);
-		geneNamesDrawer.draw(g);
+		heatMap.geneNamesDrawer.draw(g);
 
 		g.dispose();
 		
-		setXPixPerUnit(oldXPixPerUnit);
-		setYPixPerUnit(oldYPixPerUnit);
 		return image;
 	}
 
