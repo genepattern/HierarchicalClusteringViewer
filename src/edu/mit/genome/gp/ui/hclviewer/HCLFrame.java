@@ -19,9 +19,9 @@ public class HCLFrame extends JFrame {
 		setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		c.add(hcl.getComponent(), BorderLayout.CENTER);
 		Dimension screen = Toolkit.getDefaultToolkit().getScreenSize();
-		setSize((int) (screen.width * .60), (int) (screen.height * .80));
-		hcl.updateSize();
+		setSize((int) (screen.width * .80), (int) (screen.height * .80));
 		show();
+		hcl.updateSize();
 	}
 
 
@@ -102,7 +102,7 @@ public class HCLFrame extends JFrame {
 			flyOverMenuItem.addActionListener(
 				new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-						hcl.setShowFlyOverText(!hcl.isShowingFlyOverText());
+						hcl.setShowToolTipText(!hcl.isShowingToolTipText());
 					}
 				});
 			displayMenu.add(flyOverMenuItem);

@@ -55,7 +55,7 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 	int topSelectedGeneIndex = -1;
 	int bottomSelectedGeneIndex = -1;
 
-	boolean showFlyOverText = true;
+	boolean showToolTipText = true;
 	boolean showRowLabels = true;
 	boolean showColumnLabels = true;
 
@@ -247,20 +247,28 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 	}
 
 
-	public boolean isShowingFlyOverText() {
-		return showFlyOverText;
+	/**
+	Gets whether the row name, column name, and value are shown in a tooltip
+	@
+	*/
+	public boolean isShowingToolTipText() {
+		return showToolTipText;
 	}
 
 
-	public void setShowFlyOverText(boolean b) {
-		if(showFlyOverText != b && b) {
+	/**
+	Sets whether the row name, column name, and value are shown in a tooltip
+	@param b - if true, shows this tooltips; otherwise, hides this component
+	*/
+	public void setShowToolTipText(boolean show) {
+		if(showToolTipText != show && show) {
 			ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
 			toolTipManager.registerComponent(this);
-		} else if(showFlyOverText != b && !b) {
+		} else if(showToolTipText != show && !show) {
 			ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
 			toolTipManager.unregisterComponent(this);
 		}
-		showFlyOverText = b;
+		showToolTipText = b;
 
 	}
 
@@ -364,7 +372,11 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 		setMinimumSize(new Dimension(pinkOGramWidth, pinkOGramHeight));
 		setSize(pinkOGramWidth, pinkOGramHeight);
 
-		geneNamesDrawer.updateSize();
+		Graphics g = geneNamesDrawer.getGraphics();
+		if(g!=null) {
+			geneNamesDrawer.updateSize(g);
+			g.dispose();
+		}
 		totalWidth += geneNamesDrawer.getWidth();
 
 		int leftGutter = 0;
@@ -379,11 +391,14 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 		header.setSize(new Dimension(totalWidth, height + 4));
 
 		if(sampleNamesDrawer != null) {
-			sampleNamesDrawer.updateSize(totalWidth);
+			Graphics sampleNamesDrawerGraphics = sampleNamesDrawer.getGraphics();
+			if(sampleNamesDrawerGraphics!=null) {
+				sampleNamesDrawer.updateSize(sampleNamesDrawerGraphics, totalWidth);
+				sampleNamesDrawerGraphics.dispose();
+			}
 		}
 
 		topPanel.revalidate();
-
 
 		pink_geneTree_sampleTreePanel.repaint();
 		sampleNamesDrawer.revalidate();
@@ -554,25 +569,25 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 
 
 	public BufferedImage heatMapSnapshot(org.apache.batik.transcoder.image.ImageTranscoder transcoder, int columnWidth, int rowWidth) {
+		BufferedImage tempImage =transcoder.createImage(2, 2);
+		Graphics tempGraphics = tempImage.getGraphics();
+		
 		int oldXPixPerUnit = getXPixPerUnitAsInt();
-		int oldYPixPerUnit = getXPixPerUnitAsInt();
+		int oldYPixPerUnit = getYPixPerUnitAsInt();
 		
 		setXPixPerUnit(columnWidth);
 		setYPixPerUnit(rowWidth);
 		updateSize();
 		int heatMapWidth = getXPixPerUnitAsInt() * nx;
 		int heatMapHeight = getYPixPerUnitAsInt() * ny;
-
-		sampleNamesDrawer.updateSize(heatMapWidth);
-		geneNamesDrawer.updateSize();
-		int totalWidth = heatMapWidth;
-		totalWidth += 100;
-		// for gene names
 		int totalHeight = heatMapHeight;
-		totalHeight += 100;
-		// for sample names
+		int sampleNamesHeight = sampleNamesDrawer.updateSize(tempGraphics, heatMapWidth);
+		totalHeight += sampleNamesHeight;
+		int totalWidth = heatMapWidth;
+		totalWidth +=  geneNamesDrawer.updateSize(tempGraphics);
+		tempGraphics.dispose();
 
-		final BufferedImage image =transcoder.createImage(totalWidth, totalHeight); // new BufferedImage(totalWidth, totalHeight, BufferedImage.TYPE_INT_ARGB);
+		BufferedImage image =transcoder.createImage(totalWidth, totalHeight); // new BufferedImage(totalWidth, totalHeight, BufferedImage.TYPE_INT_ARGB);
 		
 		Graphics2D g = image.createGraphics();
 
@@ -580,14 +595,12 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 		g.fillRect(0, 0, image.getWidth(), image.getHeight());
 
 		g.setColor(Color.black);
-		g.setFont(new Font("monospaced", Font.PLAIN, getXPixPerUnitAsInt()));
-		java.awt.geom.AffineTransform temp = g.getTransform();
-		sampleNamesDrawer.draw(g, true); // changes transform
-		g.setTransform(temp);
-		g.translate(0, 100);
+		java.awt.geom.AffineTransform previousTransform = g.getTransform();
+		sampleNamesDrawer.draw(g); // changes transform
+		g.setTransform(previousTransform);
+		g.translate(0, sampleNamesHeight);
 		this.draw(g);
 		g.translate(heatMapWidth, 0);
-		g.setFont(new Font("monospaced", Font.PLAIN, getYPixPerUnitAsInt()));
 		g.setColor(Color.black);
 		geneNamesDrawer.draw(g);
 
@@ -719,26 +732,24 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 			super.setVisible(visible);
 		}
 
-
-		public void updateSize() {
-			setFont(new Font("monospaced", Font.PLAIN, Math.abs(getYPixPerUnitAsInt())));
-			maxWidth = 0;
-			Graphics g = getGraphics();
+		//FIXME should be 2 methods
+		public int updateSize(Graphics g) {
 			if(g == null) {
-				return;
+				return 0;
 			}
+			g.setFont(new Font("monospaced", Font.PLAIN, Math.abs(getYPixPerUnitAsInt())));
+			maxWidth = 0;
 			FontMetrics fm = g.getFontMetrics();
 			for(int i = 0; i < ny; i++) {
 				String s = matrix.getRowName(i);
 				int w = fm.stringWidth(s);
 				maxWidth = Math.max(maxWidth, w);
 			}
-			setFont(new Font("monospaced", Font.PLAIN, Math.abs(getYPixPerUnitAsInt())));
 			setPreferredSize(new Dimension(20 + maxWidth, getHeight()));
 			setSize(new Dimension(20 + maxWidth, getHeight()));
 			setMinimumSize(new Dimension(20 + maxWidth, getHeight()));
 			setMaximumSize(new Dimension(20 + maxWidth, getHeight()));
-			g.dispose();
+			return 20 + maxWidth;
 		}
 
 
@@ -753,7 +764,7 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 
 		public void draw(Graphics g) {
 			Graphics2D g2 = (Graphics2D) g;
-
+			g2.setFont(new Font("monospaced", Font.PLAIN, Math.abs(getYPixPerUnitAsInt())));
 			FontMetrics fm = g2.getFontMetrics();
 			int h = fm.getAscent();
 			Rectangle bounds = g.getClipBounds();
@@ -788,6 +799,8 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 		int maxWidth;
 		int lastXIndex;
 		int gutter = 0;
+		int height = 0;
+		
 		// FIXME delete this variable
 
 //	    scrollPane.scrollRectToVisible(new Rectangle(new Point(0, canvas.getHeight())));
@@ -879,13 +892,12 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 			lastXIndex = index;
 		}
 
-
-		void updateSize(int width) {
-			setFont(new Font("monospaced", Font.PLAIN, getXPixPerUnitAsInt()));
-			Graphics g = getGraphics();
+		//FIXME should be 2 methods
+		int updateSize(Graphics g, int width) {
 			if(g == null) {
-				return;
+				return 0;
 			}
+			g.setFont(new Font("monospaced", Font.PLAIN, getXPixPerUnitAsInt()));
 			FontMetrics fm = g.getFontMetrics();
 			maxWidth = 0;
 			for(int i = 0; i < nx; i++) {
@@ -895,31 +907,28 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 					maxWidth = Math.max(maxWidth, w);
 				}
 			}
-			setPreferredSize(new Dimension(width, maxWidth + 10));
-			setSize(new Dimension(width, maxWidth + 10));
-			setMinimumSize(new Dimension(width, maxWidth + 10));
-			setMaximumSize(new Dimension(width, maxWidth + 10));
-			g.dispose();
+			height = maxWidth + 10;
+			setPreferredSize(new Dimension(width, height));
+			setSize(new Dimension(width, height));
+			setMinimumSize(new Dimension(width, height));
+			setMaximumSize(new Dimension(width, height));
+			return height;
 		}
 
 
 		public void paintComponent(Graphics g) {
 			super.paintComponent(g);
-			draw(g, false);
+			draw(g);
 		}
 
 
-		public void draw(Graphics g, boolean forSnapShot) {
+		public void draw(Graphics g) {
 			Graphics2D g2 = (Graphics2D) g;
+			g2.setFont(new Font("monospaced", Font.PLAIN, getXPixPerUnitAsInt()));
 			FontMetrics fm = g2.getFontMetrics();
 			g2.rotate(Math.toRadians(-90));
 
-			int y = -getHeight() + 5;
-			if(forSnapShot) {
-				// FIXME incredibly bad hack
-				y = -95;
-			}
-
+			int y = -height + 5;
 			int descent = fm.getDescent();
 
 			float x = (float) (getXPixPerUnitAsInt() / 2) + gutter;
@@ -936,13 +945,9 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 				g.setColor(Color.yellow);
 				g2.rotate(Math.toRadians(90));
 				g2.setComposite(SRC_OVER_COMPOSITE);
-
 				int xstart = xToPixAsInt(leftSelectedSampleIndex);
-				//System.out.println("getXPixPerUnitAsInt " + getXPixPerUnitAsInt() + " gutter " + gutter + " xstart " + xstart);
 				int xend = xToPixAsInt(rightSelectedSampleIndex);
-
 				g.fillRect(xstart + gutter, 0, xend - xstart, getHeight());
-
 			}
 		}
 	}
