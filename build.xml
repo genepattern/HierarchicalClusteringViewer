@@ -1,0 +1,105 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE project [
+        <!ENTITY zip_targets SYSTEM "file:../ziptargets.xml">
+]>
+<!-- Ant build file --><project basedir="." default="package"
+name="GenePattern">
+ &zip_targets;
+
+    <!-- This script can be used as a template for other projects. -->
+    <!-- Simply copy this file to the new project's build dir and  -->
+    <!-- modify the values of the following properties in this 'init' task  -->
+    <target description="This is needed by most other tasks" name="init">
+        <!-- Create the time stamp -->
+        <tstamp/>
+        <property description="The name of the application file (.jar)" name="appfile" value="hclviewer.jar"/>
+        <property description="All the directories that need to be compiled and whose .class files will be part of the appfile" name="inclds" value="edu/mit/"/>
+        <property description="Set this to the location of the version property file." name="version_file" value="edu/mit/genome/gp/resources/build.properties"/>
+        <property description="The manifest file" name="manifest" value="gp.mf"/>
+        <property description="The initials for the version properties" name="initials" value="gp"/>
+        <property description="The path to the library" name="libpath"
+        value="lib/" />
+	<property name="moduleName" value="HierarchicalClusterViewer"/>
+	<path description="defines the classpath based on the value of &apos;libpath&apos;." id="library.classpath">
+	  <fileset dir="${libpath}">
+	     <include name="*.jar"/>
+             <include name="*.zip"/>
+          </fileset>
+
+	  <fileset dir="../../lib/">
+             <include name="*.jar"/>
+             <include name="*.zip"/>
+          </fileset>
+	  
+	  <fileset dir="../../build/">
+             <include name="*.jar"/>
+             <include name="*.zip"/>
+          </fileset>
+        </path>
+    </target>
+
+
+    <target depends="init, clean, compile" description="Cleans, compiles and creates the jar file" name="package">
+        <!-- use index="true" -->
+        <jar basedir="." defaultexcludes="true" excludes="**/*.java, **/*.form, **/.nbattrs" includes="${inclds}" jarfile="${appfile}" manifest="${manifest}">
+        </jar>
+    </target>
+
+    <target description="Removes all the .class files" name="clean">
+        <delete>
+            <fileset dir="." includes="**/*.class"/>
+        </delete>
+    </target>
+
+    <target depends="init" description="Compiles the .java files that have been modified or that don&apos;t have .class files" name="compile">
+        <javac srcdir="src" classpathref="library.classpath" debug="true" defaultexcludes="true" deprecation="true" destdir="." optimize="false" proceed="false">
+	    <classpath refid="library.classpath"/>
+	</javac>
+    </target>
+    
+    <target description="Sets the program&apos;s version, build, release and etc. properties" name="build_helper">
+        <propertyfile comment="Created by ANT; defines the build version, date etc." file="${version_file}">
+            <entry key="${initials}.build" operation="=" pattern="yyyyMMdd" type="date" value="now"/>
+            <entry key="${initials}.date" pattern="EEE, MMM d yyyy" type="date" value="now"/>
+            <entry key="${initials}.version.major" operation="=" type="int" value="0"/>
+            <entry key="${initials}.version.minor" operation="=" type="int" value="1"/>
+            <entry key="${initials}.version.revision" operation="+" type="int" value="0"/>
+            <entry default="10" key="${initials}.count" operation="+" type="int"/>
+            <entry default="Alpha" key="${initials}.release" operation="=" type="string" value="Alpha"/>
+            <entry key="${initials}.program.name" operation="=" type="string" value="GenePattern"/>
+        </propertyfile>
+    </target>
+    <target depends="init,build_helper,package" description="Creates the final distribution.\n Modifies the com.mprgroup.resources.properties file\n to set the date stamp, update the revision, build number etc." name="Final_Distribution"/>
+    <target depends="clean,compile" description="Cleans the source then compiles all" name="build"/>
+    
+    <target depends="init" description="Run the program" name="run">
+        <java classname="edu.mit.genome.gp.GenePattern" classpath="./:${library.classpath}" fork="true">
+            <classpath refid="library.classpath"/>
+        </java>
+    </target>
+
+    <target depends="init, package" description="Creates installable
+    zip file" name="create-zip">
+<antcall target="prezip"/>
+
+
+	<zip destfile="../build/${moduleName}.zip" whenempty="fail">
+		<fileset dir="." includes="manifest, ${appfile}, version.txt"/>
+		<fileset dir="${libpath}"/>
+		<fileset dir="../../build/">
+                    <include name="gp-common.jar"/>
+		</fileset>  
+
+
+	</zip>
+	<antcall target="postzip"/>
+    </target>
+
+
+</project>
+
+
+
+
+
+
