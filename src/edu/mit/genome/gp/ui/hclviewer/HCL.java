@@ -424,12 +424,13 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 		int x = (int) pixToX(e.getX());
 		int y = (int) pixToY(e.getY());
 
-		StringBuffer sb = new StringBuffer();
-		String rowId = matrix.getRowName(y);
-		String columnId = matrix.getName(x);
-		sb.append(rowId);
-		if(y >= 0 && y < ny && x >= 0 && x < nx) {
+		
+		if(y >= 0 && y < matrix.getRowDimension() && x >= 0 && x < matrix.getColumnDimension()) {
 
+			StringBuffer sb = new StringBuffer();
+			String rowId = matrix.getRowName(y);
+			String columnId = matrix.getName(x);
+			sb.append(rowId);
 			sb.append(rowId);
 			sb.append(", ");
 			sb.append(columnId);
