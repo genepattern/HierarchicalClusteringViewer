@@ -34,6 +34,11 @@ public class Annotation {
 	public String toString() {
 		return id;	
 	}
+	
+	public Object get(String key) {
+		Entry e =(Entry) list.get(0);
+		return e.value; // FIXME
+	}
 	/*public String toString() {
 		StringBuffer sb = new StringBuffer();
 		sb.append(id);

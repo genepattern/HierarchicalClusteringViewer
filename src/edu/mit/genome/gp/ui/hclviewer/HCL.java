@@ -10,10 +10,10 @@ import java.util.*;
 import java.awt.event.*;
 import java.awt.print.*;
 
-import edu.mit.genome.dataobj.*;
+
 import java.io.*;
 import javax.swing.event.*;
-
+import edu.mit.genome.dataobj.jg.*;
 /**
  *  Issues: -when at bottom of scroll pane and zoom out, image is too high, currently using hack to fix this -Add
  *  another class HCL that is composite of pinkogram and dendrograms, pinkogram
@@ -39,7 +39,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 	JScrollPane scrollPane;
 	final int INITIAL_X_PIX_PER_UNIT = 4;
 	final int INITIAL_Y_PIX_PER_UNIT = 4;
-	FloatMatrix matrix;
+	Dataset matrix;
 
 	JPanel headerPanel = new JPanel();// contains sample names and legend if it exists
 	SampleNames sampleNamesDrawer;
@@ -68,15 +68,15 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 	
 	AlphaComposite SRC_OVER_COMPOSITE = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
 	
-	public HCL(FloatMatrix matrix, float minValue, float maxValue, Dendrogram sampleTree, Dendrogram geneTree) {
+	public HCL(Dataset matrix, float minValue, float maxValue, Dendrogram sampleTree, Dendrogram geneTree) {
 		this.matrix = matrix;
 		geneNamesDrawer = new GeneNames();
 		sampleNamesDrawer = new SampleNames();
 		this.minValue = minValue;
 		this.maxValue = maxValue;
 
-		nx = matrix.getColumnCount();
-		ny = matrix.getRowCount();
+		nx = matrix.getColumnDimension();
+		ny = matrix.getRowDimension();
 		this.sampleTree = sampleTree;
 		this.geneTree = geneTree;
 		if(sampleTree != null) {
@@ -218,7 +218,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		updateSize();
 	}
 
-	public FloatMatrix getMatrix() {
+	public Dataset getMatrix() {
 		return matrix;
 	}
 
@@ -391,30 +391,21 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		int y = (int) pixToY(e.getY());
 
 		StringBuffer sb = new StringBuffer();
-		Annotation rowAnnotation = (Annotation) matrix.getAnnotationForRow(y);
-		Annotation columnAnnotation = (Annotation) matrix.getAnnotationForColumn(x);
-		String rowId = rowAnnotation.getId();
-		String columnId = columnAnnotation.getId();
+		String rowId = matrix.getRowName(y);
+		String columnId = matrix.getName(x);
 		sb.append(rowId);
 		if(y >= 0 && y < ny && x >= 0 && x < nx) {
-			for(Iterator it = rowAnnotation.iterator(); it.hasNext(); ) {
-				Annotation.Entry entry = (Annotation.Entry) it.next();
-				sb.append("<br>");
-				sb.append(entry.key);
-				sb.append(":");
-				sb.append(entry.value);
-
-			}
+			
+			sb.append(rowId);
+			sb.append(", ");
 			sb.append(columnId);
-			for(Iterator it = columnAnnotation.iterator(); it.hasNext(); ) {
-				Annotation.Entry entry = (Annotation.Entry) it.next();
-				sb.append("<br>");
-				sb.append(entry.key);
-				sb.append(":");
-				sb.append(entry.value);
-
-			}
-			return "<html> " + sb.toString() + "<br>Value: " + String.valueOf(matrix.getElement(y, x)) + "</html>";
+		//	sb.append("<br>");
+		//	sb.append(matrix.getRowDescription(y));
+		//	sb.append("<br>");
+		//	sb.append(matrix.getDescription(x));
+		//	sb.append("<br>");
+			
+			return "<html> " + sb.toString() + "<br>Value: " + String.valueOf(matrix.get(y, x)) + "</html>";
 		}
 		return null;
 	}
@@ -458,7 +449,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		for(int iy = bottom; iy < top; iy++) {
 
 			for(int ix = left; ix < right; ix++) {
-				float val = matrix.getElement(iy, ix);
+				float val = (float) matrix.get(iy, ix);
 				Color c = colorConverter.getColor(iy, ix);
 
 				g.setColor(c);
@@ -660,8 +651,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			}
 			FontMetrics fm = g.getFontMetrics();
 			for(int i = 0; i < ny; i++) {
-				Annotation annot = (Annotation) matrix.getAnnotationForRow(i);
-				String s = annot.getId();
+				String s = matrix.getRowName(i);
 				int w = fm.stringWidth(s);
 				maxWidth = Math.max(maxWidth, w);
 			}
@@ -689,8 +679,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			int right = (int) Math.min(nx, (bounds.x + bounds.width) / getIntXPixPerUnit() + 1);
 
 			for(int i = bottom; i < top; i++) {
-				Annotation annot = (Annotation) matrix.getAnnotationForRow(i);
-				String s = annot.getId();
+				String s = matrix.getRowName(i);
 				g2.drawString(s, 0, yToPix(i + 1) + h );// fix height
 			}
 
@@ -799,9 +788,8 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			FontMetrics fm = g.getFontMetrics();
 			maxWidth = 0;
 			for(int i = 0; i < nx; i++) {
-				Annotation annot = (Annotation) matrix.getAnnotationForColumn(i);
-				if(annot != null) {
-					String s = annot.getId();
+				String s = matrix.getName(i);
+				if(s != null) {
 					int w = fm.stringWidth(s);
 					maxWidth = Math.max(maxWidth, w);
 				}
@@ -826,9 +814,8 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			float x = (float) (getIntXPixPerUnit() / 2) + gutter;
 
 			for(int i = 0; i < nx; i++) {
-				Annotation annot = (Annotation) matrix.getAnnotationForColumn(i);
-				if(annot != null) {
-					String s = annot.getId();
+				String s = matrix.getName(i);
+				if(s != null) {
 					g2.drawString(s, y, descent + x);
 					x += (float) getIntXPixPerUnit();
 				}

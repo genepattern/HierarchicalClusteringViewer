@@ -3,18 +3,18 @@ import java.awt.image.BufferedImage;
 import java.awt.*;
 import javax.swing.*;
 
-import edu.mit.genome.gp.ui.hclviewer.FloatMatrix;
+import edu.mit.genome.dataobj.jg.*;
 
 public class AbsoluteColorConverter implements ColorConverter {
 	static Color missingColor = new Color(128, 128, 128);
 	BufferedImage maxColorImage = createGradientImage(Color.black, Color.red);
 	BufferedImage minColorImage = createGradientImage(Color.green, Color.black);
-	FloatMatrix matrix;
+	Dataset matrix;
 	ColorConverterHeader header;
 	float min, max;
 	Color maxColor, minColor, neutralColor;
 
-	public AbsoluteColorConverter(Color minColor, Color maxColor, Color neutralColor, FloatMatrix matrix, float min, float max) {
+	public AbsoluteColorConverter(Color minColor, Color maxColor, Color neutralColor, Dataset matrix, float min, float max) {
 		this.matrix = matrix;
 		maxColorImage = createGradientImage(neutralColor, maxColor);
 		minColorImage = createGradientImage(minColor, neutralColor);
@@ -54,7 +54,7 @@ public class AbsoluteColorConverter implements ColorConverter {
 	}
 
 	public Color getColor(int row, int column) {
-		float value = matrix.getElement(row, column);
+		float value = (float) matrix.get(row, column);
 		if(Float.isNaN(value)) {
 			return missingColor;
 		}

@@ -15,7 +15,6 @@ public class Dendrogram extends PixPanelForDend {
 	Color selectedNodeColor = Color.yellow;
 	TreeNode selectedNode = null;// the root of the selected branch
 	Map selectedNodes = new HashMap();
-	//java.util.List leafNodes = new LinkedList();// needed for pinkogram, is there another way to do this??
 	NodeSelectionListener nodeSelectionListener;
 	int numLeaves = 0;
 
@@ -25,6 +24,27 @@ public class Dendrogram extends PixPanelForDend {
 	/** min and max distances or correlations */
 	double min = Double.MAX_VALUE;
 	double max = Double.MIN_VALUE;
+	
+	public static void main(String[] args) {
+		JFrame f = new JFrame();
+		
+		TreeNode left= new TreeNode(null, null, 1, "1");
+		left.correlation = -20.733477;
+		left.position = 0;
+		
+		TreeNode right= new TreeNode(null, null, 1, "2");
+		right.correlation = -22.908957;
+		right.position = 10;
+		
+		TreeNode root= new TreeNode(left, right, 1, "3");
+		root.correlation = -23.378288;
+		
+		Dendrogram d = new Dendrogram(root, Dendrogram.LEFT_ORIENTATION);
+		d.setLeafNodeSpacing(0,4);
+		f.getContentPane().add(d, BorderLayout.CENTER);
+		f.setSize(400,400);
+		f.show();
+	}
 	
 	public Dendrogram(TreeNode root, short orientation) {
 		super();
@@ -182,20 +202,23 @@ public class Dendrogram extends PixPanelForDend {
 	 */
 	private int calculateLeafPositions(int pos, TreeNode node) {
 		if(node.left != null) {
-			pos = calculateLeafPositions(pos, node.left);
+		//	pos = 
+			calculateLeafPositions(pos, node.left);
 		}
 		if(node.right != null) {
-			pos = calculateLeafPositions(pos, node.right);
+			//pos = 
+			calculateLeafPositions(pos, node.right);
 		} else {
 			numLeaves++;
-			node.position = pos;
+		//	node.position = pos;
 			pos++;
-			
 			min = Math.min(min, node.correlation);
 			max = Math.max(max, node.correlation);
 			
 		}
+		
 		return pos;
+		
 	}
 
 	private void calculateInternalNodePositions(TreeNode node) {
@@ -217,18 +240,10 @@ public class Dendrogram extends PixPanelForDend {
 	}
 
 
-	public void paintComponent(Graphics g) {
+	public void  paintComponent(Graphics g) {
 		super.paintComponent(g);
-
-		//	BufferedImage image = new BufferedImage(getWidth(), getHeight(), BufferedImage.TYPE_INT_RGB);
-		//Graphics2D g2 = image.createGraphics();
-		//g2.setColor(Color.white);
-		//g2.fillRect(0, 0, getWidth(), getHeight());
-
 		Graphics2D g2 = (Graphics2D) g;
-
 		Line2D.Double line = new Line2D.Double();
-	
 		//root.draw(this, g2);
 
 
@@ -248,9 +263,11 @@ public class Dendrogram extends PixPanelForDend {
 			double left_child_height = (leftChild == null) ? 0 : leftChild.height;
 			double right_child_height = (rightRhild == null) ? 0 : rightRhild.height;
 			double pixHeight = yToPix(currentNodeHeight);
-			double xPix1 = xToPix(leftChild.position);
+			double xPix1 = xToPix(leftChild.position); // when left orientation gives y pixel coordinate
 			double xPix2 = xToPix(rightRhild.position);
 
+	//		System.out.println("leftChild.position " + leftChild.position + " xPix1 " + xPix1);
+	//		System.out.println("rightRhild.position " + rightRhild.position + " xPix2 " + xPix2);
 			if(selectedNodes.get(currentNode.id) != null) {
 				g2.setColor(selectedNodeColor);
 			} else {

@@ -5,8 +5,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import edu.mit.genome.annotation.*;
-import edu.mit.genome.math.*;
+import edu.mit.genome.dataobj.jg.*;
 
 /**
  *  see http://microarray.ccgb.umn.edu/smd/html/MicroArray/help/formats.shtml
@@ -21,45 +20,14 @@ public class CdtParser {
 	/**  max value in cdt file */
 	float maxValue = Integer.MIN_VALUE;
 	/**  matrix of values in cdt file */
-	FloatMatrix matrix;
+	Dataset matrix;
 	TreeNode geneTreeRoot;
 	TreeNode arrayTreeRoot;
+	private Map availableColumnNodes = new HashMap();
+	private Map availableRowNodes = new HashMap();
+	
 
-	public TreeNode parseAtr_Gtr(String file) throws IOException {
-		TreeNode root = null;
-
-		BufferedReader br = new BufferedReader(new FileReader(file));
-		Map availableNodes = new HashMap();
-		String s = null;
-		while((s = br.readLine()) != null) {
-			StringTokenizer st = new StringTokenizer(s, "\t");
-			String nodeId = st.nextToken().trim();
-
-			String leftChildId = st.nextToken().trim();
-			String rightChildId = st.nextToken().trim();
-
-			double correlation = Double.parseDouble(st.nextToken());
-
-			double height = correlation;
-
-			TreeNode leftNode = (TreeNode) availableNodes.remove(leftChildId);
-			TreeNode rightNode = (TreeNode) availableNodes.remove(rightChildId);
-			if(leftNode == null) {
-				leftNode = new TreeNode(null, null, 1, leftChildId);
-			}
-
-			if(rightNode == null) {
-				rightNode = new TreeNode(null, null, 1, rightChildId);
-			}
-
-			root = new TreeNode(leftNode, rightNode, height, nodeId);
-			availableNodes.put(nodeId, root);
-		}
-		br.close();
-		return root;
-	}
-
-
+	
 	public static void main(String[] args) {
 
 	/*	CmdLineParser parser = new CmdLineParser();
@@ -87,14 +55,14 @@ public class CdtParser {
 		
 		if(args.length==2) {
 			String s = args[1];	
-			if(s.endsWith(".atr")) {
+			if(s.toLowerCase().endsWith(".atr")) {
 				atrFileName = s;
 			} else {
 				gtrFileName = s;
 			}
 		} else if(args.length==3) {
 			String s = args[1];	
-			if(s.endsWith(".atr")) {
+			if(s.toLowerCase().endsWith(".atr")) {
 				atrFileName = s;
 				gtrFileName = args[2];
 			} else {
@@ -182,12 +150,31 @@ public class CdtParser {
 	public void parse(String file, String atrFileName, String gtrFileName) throws IOException {
 
 		BufferedReader br = new BufferedReader(new FileReader(file));
+		
+		// Remove Comment Lines
+
+/*    for (i=DataFileList->Count-1;i>=0;i--) //FIXME
+    {
+        if (DataFileList->Strings[i].SubString(1,6) == "REMARK")
+        {
+            DataFileList->Delete(i);
+        }
+        if (DataFileList->Strings[i].Length() < 3)
+        {
+            DataFileList->Delete(i);
+        }
+    }*/
+	 
 		int Columns = 0;
 		// Parse First Line
+		java.util.List names = new ArrayList();
+		java.util.List rowNames = new ArrayList();
+		java.util.List rowDescriptions = new ArrayList();
+		
 		String[] headers = split(br.readLine());
 		int numHeaders = headers.length;
 		boolean[] IsData = new boolean[numHeaders];
-		//System.out.println("numHeaders " + numHeaders);
+		
 		Arrays.fill(IsData, true);
 
 		int GIDIndex = findIndexOf(headers, "GID");
@@ -197,9 +184,9 @@ public class CdtParser {
 			LoadGeneTree = true;
 			UniqueIDIndex = GIDIndex + 1;
 			IsData[GIDIndex] = false;
-			//System.out.println("GIDIndex " + GIDIndex);
+			
 		}
-		//System.out.println("UniqueIDIndex " + UniqueIDIndex);
+
 
 		String UniqueID = headers[UniqueIDIndex];
 		IsData[UniqueIDIndex] = false;
@@ -207,42 +194,39 @@ public class CdtParser {
 		int NameIndex = findIndexOf(headers, "NAME");
 
 		if(NameIndex > -1) {
-			//	System.out.println("NameIndex " + NameIndex);
+		
 			IsData[NameIndex] = false;
 		}
 
 		int GeneWeightIndex = findIndexOf(headers, "GWEIGHT");
-		//System.out.println("GeneWeightIndex " + GeneWeightIndex);
+		
 		if(GeneWeightIndex > -1) {
 			IsData[GeneWeightIndex] = false;
 		}
-		matrix = new FloatMatrix(1000, headers.length / 2);
+		
+	 
+		matrix =  DatasetFactory.createDataset(1, headers.length / 2);
 
 		for(int i = 0; i < headers.length; i++) {
 			if(IsData[i]) {
 				String array = headers[i];
-				Annotation colAnnot = new Annotation(array);
-				matrix.setAnnotationForColumn(Columns, colAnnot);
+				names.add(array);
 				Columns++;
-				//System.out.println("Columns " + Columns);
-				// Arrays->Add(headers[i]);
 			}
 		}
-
+		
 		int Rows = 0;
 		String line = null;
 		boolean LoadArrayTree = false;
 		String ArrayWeightString = null;
 		String ArrayHeaderString = null;
 		while((line = br.readLine()) != null) {
-
 			String[] tokens = split(line);// toArray(line);
-			//	for(int i = 0; i < tokens.length; i++) {
-			//		System.out.println(tokens[i]);
-			//	}
+	
 			if(tokens[0].equals("AID")) {
 				LoadArrayTree = true;
-				ArrayHeaderString = tokens[0];
+				ArrayHeaderString = line;
+				
 			} else if(tokens[0].equals("EWEIGHT")) {
 				ArrayWeightString = tokens[0];
 			} else {
@@ -254,15 +238,6 @@ public class CdtParser {
 				String Name = null;
 				if((NameIndex > -1) && (NameIndex < tokens.length)) {
 					Name = tokens[NameIndex];
-					/*
-					    for (int Pos=Name.Length();Pos>=0;Pos--)
-					    {
-					    if (Name.SubString(Pos,1) == "\"")
-					    {
-					    Name.Delete(Pos,1);
-					    }
-					    }
-					  */
 				}
 
 				String ID = null;
@@ -277,22 +252,22 @@ public class CdtParser {
 					} catch(NumberFormatException nfe) {
 					}
 				}
-				Annotation rowAnnot = new Annotation(ID);
-				rowAnnot.add("NAME", Name);
-				//rowAnnot.add("GID", GID);
-				matrix.setAnnotationForRow(Rows, rowAnnot);
-
-				//   index = Genes->Add(ID);
-
-				/*
-				    if(LoadGeneTree) {
-				    try {
-				    nGID = (GID.SubString(5, GID.Length() - 5)).ToInt();
-				    ListIndex[nGID] = index;
-				    } catch(NumberFom e) {
-				    }
-				    }
-				  */
+				if (LoadGeneTree) {
+                try {
+                  //  int nGID =  Integer.parseInt(GID.substring("GENE".length(),GID.length()-1)); 
+						  TreeNode node = new TreeNode(null, null, 1, ID);
+						  node.position = Rows;
+						  availableRowNodes.put(GID, node);
+						//  System.out.println("created " + GID);
+                }
+                catch (NumberFormatException e) {
+						 e.printStackTrace();
+                }
+            }
+				
+				rowNames.add(ID);
+				rowDescriptions.add(Name);
+				
 				int columnIndex = 0;
 
 				for(int j = 0; j < min(tokens.length, headers.length); j++) {
@@ -301,24 +276,11 @@ public class CdtParser {
 							float Val = Float.parseFloat(tokens[j]);
 							minValue = Val < minValue ? Val : minValue;
 							maxValue = Val > maxValue ? Val : maxValue;
-							matrix.setElement(Rows, columnIndex, Val);
-
+							matrix.set(Rows, columnIndex, Val);
 						} catch(NumberFormatException nfe) {
-
-							matrix.setElement(Rows, columnIndex, Float.NaN);// missing value
+							matrix.set(Rows, columnIndex, Float.NaN);// missing value
 						}
-						//  GeneTreeNode->Data->Data[index] = Val;
-						//GeneTreeNode->Data->Mask[index] = true;
-						//  Sum += Val;
-						// Sum2 += pow(Val,2.0);
-						// DCount += 1.0;
-						//  }
-						// catch (EConvertError &E)
-						//{
-						//   GeneTreeNode->Data->Mask[index] = false;
-						//}
-						// index++;
-						//System.out.println("columnIndex " + columnIndex);
+						
 						columnIndex++;
 					}
 				}
@@ -327,28 +289,45 @@ public class CdtParser {
 				    Handle case where there are too few columns of data
 				  */
 				for(int j = columnIndex; j < Columns; j++) {
-					matrix.setElement(Rows, j, Float.NaN);
+					matrix.set(Rows, j, Float.NaN);
 					// GeneTreeNode->Data->Mask[j] = false;
 				}
 
 				Rows++;
 			}
 		}
-
-		matrix.trimToSize();
-		String base = file.substring(0, file.lastIndexOf("."));
-		//System.out.println("base " + base);
+	
+		
+		if(LoadArrayTree) {
+			StringTokenizer st = new StringTokenizer(ArrayHeaderString);
+			st.nextToken(); // skip 'AID'
+			
+			for(int i = 0, size = matrix.getColumnDimension(); i < size; i++) {
+				String name = matrix.getName(i);
+				TreeNode node = new TreeNode(null, null, 1, name);
+				node.position = i;
+				String aid = st.nextToken();
+			//	System.out.println("created " + aid);
+				availableColumnNodes.put(aid, node);
+			}
+		}
+		  
+		
+		matrix.setNames((String[])names.toArray(new String[names.size()]));
+		matrix.setRowNames((String[])rowNames.toArray(new String[rowNames.size()]));
+		matrix.setRowDescriptions((String[])rowDescriptions.toArray(new String[rowDescriptions.size()]));
+	
 		if(gtrFileName!=null) {
-			geneTreeRoot = parseGtrOrAtr(gtrFileName);
+			geneTreeRoot = parseGtrOrAtr(gtrFileName, true, availableRowNodes);
 		}
 		if(atrFileName!=null) {
-			arrayTreeRoot = parseGtrOrAtr(atrFileName);
+			arrayTreeRoot = parseGtrOrAtr(atrFileName, false, availableColumnNodes);
 		}
 	}
 
-	TreeNode parseGtrOrAtr(String file) throws IOException {
+	TreeNode parseGtrOrAtr(String file, boolean isGeneTree, Map availableNodes) throws IOException {
 		BufferedReader br = new BufferedReader(new FileReader(file));
-		Map availableNodes = new HashMap();
+	
 		String line = null;
 		TreeNode root = null;
 		while((line = br.readLine()) != null) {
@@ -356,6 +335,7 @@ public class CdtParser {
 			String nodeId = tokens[0];
 			String leftChildId = tokens[1];
 			String rightChildId = tokens[2];
+			//System.out.println("nodeId " + nodeId + " leftChildId " + leftChildId + " rightChildId " + rightChildId);
 			double correlation = Double.parseDouble(tokens[3]);
 
 			// nGID1 =  (Child1.SubString(5,Child1.Length()-5)).ToInt();
@@ -366,10 +346,12 @@ public class CdtParser {
 			TreeNode rightNode = (TreeNode) availableNodes.remove(rightChildId);
 			if(leftNode == null) {
 				leftNode = new TreeNode(null, null, 1, leftChildId);
+				//System.out.println("retrieved leftChildId " + leftChildId);
 			}
 
 			if(rightNode == null) {
 				rightNode = new TreeNode(null, null, 1, rightChildId);
+				//System.out.println("retrieved rightChildId " + rightChildId);
 			}
 
 			root = new TreeNode(leftNode, rightNode, correlation, nodeId);
