@@ -268,7 +268,7 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 			ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
 			toolTipManager.unregisterComponent(this);
 		}
-		showToolTipText = b;
+		showToolTipText = show;
 
 	}
 
