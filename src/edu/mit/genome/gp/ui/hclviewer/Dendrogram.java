@@ -262,23 +262,23 @@ public class Dendrogram extends ZoomPanel {
 				}
 			}
 
-			int index1 = -1;
-			int index2 = -1;
+			int rightIndex = -1;
+			int leftIndex = -1;
 			if(selectedNode != null) {
 				TreeNode temp = selectedNode;
 				while(temp.left != null) {
 					temp = temp.left;
 				}
 
-				index1 = (int) temp.position;
+				rightIndex = (int) temp.position;
 
 				temp = selectedNode;
 				while(temp.right != null) {
 					temp = temp.right;
 				}
-				index2 = (int) temp.position;
+				leftIndex = (int) temp.position;
 			}
-			notifyListeners(index1, index2);
+			notifyListeners(leftIndex, rightIndex);
 
 			repaint();
 

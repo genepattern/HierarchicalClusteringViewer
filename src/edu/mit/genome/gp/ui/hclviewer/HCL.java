@@ -335,16 +335,17 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 
 
 	public void nodeSelectionChanged(NodeSelectionEvent e) {
+
 		int index1 = e.getFirstIndex();
 		int index2 = e.getLastIndex();
 		Object source = e.getSource();
 		if(source == sampleTree) {
 			leftSelectedSampleIndex = index1;
-			rightSelectedSampleIndex = index2 + 1;
+			rightSelectedSampleIndex = index2+1;
 			sampleSelectionChanged(false);
 		} else {
 			bottomSelectedGeneIndex = index1;
-			topSelectedGeneIndex = index2 + 1;
+			topSelectedGeneIndex =  index2+1;
 			geneSelectionChanged(false);
 		}
 
@@ -430,7 +431,6 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 			StringBuffer sb = new StringBuffer();
 			String rowId = matrix.getRowName(y);
 			String columnId = matrix.getName(x);
-			sb.append(rowId);
 			sb.append(rowId);
 			sb.append(", ");
 			sb.append(columnId);
