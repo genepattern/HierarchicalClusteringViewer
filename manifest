@@ -47,5 +47,5 @@ p2_optional=on
 p3_name=atr.filename
 p3_description=Array Tree file (TreeView atr file)
 p3_TYPE=FILE
-commandLine=<java> -Xmx512m -cp <libdir>gp-common.jar<path.separator><libdir>hclviewer.jar<path.separator><libdir>jargs.jar<path.separator><libdir>ij.jar <className> <cdt.filename> <gtr.filename> <atr.filename>
+commandLine=<java> -Xmx512m -cp <libdir>gp-common.jar<path.separator><libdir>hclviewer.jar<path.separator><libdir>jargs.jar<path.separator><libdir>ij.jar<path.separator><libdir>colt.jar<path.separator><libdir>trove.jar<path.separator><libdir>file_support.jar <className> <cdt.filename> <gtr.filename> <atr.filename>
 privacy=public

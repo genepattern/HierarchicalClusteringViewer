@@ -28,8 +28,8 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 	int pinkOGramWidth, pinkOGramHeight;
 
 	int ny, nx;
-	float minValue;
-	float maxValue;
+	double minValue;
+	double maxValue;
 
 	JPanel pinkOGramAndGeneNamesPanel = new JPanel();
 	GeneNames geneNamesDrawer;
@@ -68,7 +68,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 	
 	AlphaComposite SRC_OVER_COMPOSITE = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
 	
-	public HCL(Dataset matrix, float minValue, float maxValue, Dendrogram sampleTree, Dendrogram geneTree) {
+	public HCL(Dataset matrix, double minValue, double maxValue, Dendrogram sampleTree, Dendrogram geneTree) {
 		this.matrix = matrix;
 		geneNamesDrawer = new GeneNames();
 		sampleNamesDrawer = new SampleNames();
@@ -184,11 +184,11 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 	}
 
 	public float getMinValue() {
-		return minValue;
+		return (float) minValue; // FIXME
 	}
 
 	public float getMaxValue() {
-		return maxValue;
+		return (float) maxValue; // FIXME
 	}
 
 	/**
