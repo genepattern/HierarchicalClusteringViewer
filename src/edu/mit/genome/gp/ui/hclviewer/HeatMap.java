@@ -7,6 +7,7 @@ import javax.swing.*;
 import java.io.*;
 
 public class HeatMap {
+
 	public static void main(String[] args) throws Exception {
 
 		//	DatasetReader reader = DatasetIO.getReaderByFileName(args[0]);
@@ -23,8 +24,6 @@ public class HeatMap {
 			}
 		}
 		final HCL hcl = new HCL(d, min, max, null, null);
-		hcl.zoomIn();
-		hcl.zoomIn();
 		org.apache.batik.transcoder.image.ImageTranscoder transcoder = null; 
         // createImage();
         String outputFileName = args[1];
@@ -41,7 +40,22 @@ public class HeatMap {
 				outputFileName += ".jpg";
 			}
 		}
-		BufferedImage snapshotImage = hcl.heatMapSnapshot(transcoder);
+		int columnWidth = 8;
+		int rowWidth = 8;
+		
+		for(int i = 3; i < args.length; ) { // 1st arg is input file name, 2nd arg is output file name, 3rd arg is format
+			if(args[i].equals("-cw")) {
+				columnWidth = Integer.parseInt(args[++i]);
+				break;
+			}else if(args[i].equals("-rw")) {
+				rowWidth = Integer.parseInt(args[++i]);
+				break;
+			} else {
+				System.err.println("unknown option " + args[i]);
+				System.exit(1);
+			}
+		}
+		BufferedImage snapshotImage = hcl.heatMapSnapshot(transcoder, columnWidth, rowWidth);
         FileOutputStream fos = new FileOutputStream(outputFileName);
         org.apache.batik.transcoder.TranscoderOutput out = new org.apache.batik.transcoder.TranscoderOutput(fos);
         transcoder.writeImage(snapshotImage, out);

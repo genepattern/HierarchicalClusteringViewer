@@ -553,7 +553,13 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 // size of header and gene tree
 
 
-	public BufferedImage heatMapSnapshot(org.apache.batik.transcoder.image.ImageTranscoder transcoder) {
+	public BufferedImage heatMapSnapshot(org.apache.batik.transcoder.image.ImageTranscoder transcoder, int columnWidth, int rowWidth) {
+		int oldXPixPerUnit = getXPixPerUnitAsInt();
+		int oldYPixPerUnit = getXPixPerUnitAsInt();
+		
+		setXPixPerUnit(columnWidth);
+		setYPixPerUnit(rowWidth);
+		updateSize();
 		int heatMapWidth = getXPixPerUnitAsInt() * nx;
 		int heatMapHeight = getYPixPerUnitAsInt() * ny;
 
@@ -576,8 +582,7 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 		g.setColor(Color.black);
 		g.setFont(new Font("monospaced", Font.PLAIN, getXPixPerUnitAsInt()));
 		java.awt.geom.AffineTransform temp = g.getTransform();
-		sampleNamesDrawer.draw(g, true);
-
+		sampleNamesDrawer.draw(g, true); // changes transform
 		g.setTransform(temp);
 		g.translate(0, 100);
 		this.draw(g);
@@ -587,6 +592,9 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 		geneNamesDrawer.draw(g);
 
 		g.dispose();
+		
+		setXPixPerUnit(oldXPixPerUnit);
+		setYPixPerUnit(oldYPixPerUnit);
 		return image;
 	}
 
