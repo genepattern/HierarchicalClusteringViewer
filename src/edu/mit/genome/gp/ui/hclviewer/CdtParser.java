@@ -313,9 +313,9 @@ public class CdtParser {
 		}
 		  
 		
-		matrix.setNames((String[])names.toArray(new String[names.size()]));
-		matrix.setRowNames((String[])rowNames.toArray(new String[rowNames.size()]));
-		matrix.setRowDescriptions((String[])rowDescriptions.toArray(new String[rowDescriptions.size()]));
+		matrix.setNames(names);
+		matrix.setRowNames(rowNames);
+		matrix.setRowDescriptions(rowDescriptions);
 	
 		if(gtrFileName!=null) {
 			geneTreeRoot = parseGtrOrAtr(gtrFileName, true, availableRowNodes);
