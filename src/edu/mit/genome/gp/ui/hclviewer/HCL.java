@@ -10,18 +10,18 @@ import java.util.*;
 import java.awt.event.*;
 import java.awt.print.*;
 
-
 import java.io.*;
 import javax.swing.event.*;
 import edu.mit.genome.dataobj.jg.*;
 /**
- *  Issues: -when at bottom of scroll pane and zoom out, image is too high, currently using hack to fix this -Add
- *  should just draw matrix, gene names, and sample names -preview panel -if normalize by row, then should have separate
- *  header for each row
+ *  Issues: -when at bottom of scroll pane and zoom out, image is too high,
+ *  currently using hack to fix this -Add should just draw matrix, gene names,
+ *  and sample names -preview panel -if normalize by row, then should have
+ *  separate header for each row
  *
- * @author     jgould
- * @created    August 13, 2003
- */ 
+ *@author     jgould
+ *@created    August 13, 2003
+ */
 
 public class HCL extends PixPanel implements NodeSelectionListener {
 	int pinkOGramWidth, pinkOGramHeight;
@@ -40,7 +40,8 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 	final int INITIAL_Y_PIX_PER_UNIT = 4;
 	Dataset matrix;
 
-	JPanel headerPanel = new JPanel();// contains sample names and legend if it exists
+	JPanel headerPanel = new JPanel();
+	// contains sample names and legend if it exists
 	SampleNames sampleNamesDrawer;
 
 	ColorConverterHeader header;
@@ -62,11 +63,12 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 
 	Action zoomInAction, zoomOutAction;
 
+	JPanel topPanel;
+	// column header for scroll pane
 
-	JPanel topPanel; // column header for scroll pane
-	
 	AlphaComposite SRC_OVER_COMPOSITE = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
-	
+
+
 	public HCL(Dataset matrix, double minValue, double maxValue, Dendrogram sampleTree, Dendrogram geneTree) {
 		this.matrix = matrix;
 		geneNamesDrawer = new GeneNames();
@@ -101,8 +103,10 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		headerPanel.setBackground(Color.white);
 		headerPanel.add(sampleNamesDrawer, BorderLayout.SOUTH);
 
-		KeyStroke up = KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_UP, 0);// zoom in
-		KeyStroke down = KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_DOWN, 0);// zoom out
+		KeyStroke up = KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_UP, 0);
+		// zoom in
+		KeyStroke down = KeyStroke.getKeyStroke(java.awt.event.KeyEvent.VK_DOWN, 0);
+		// zoom out
 
 		zoomInAction =
 			new AbstractAction() {
@@ -115,7 +119,8 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		zoomOutAction =
 			new AbstractAction() {
 				public void actionPerformed(ActionEvent e) {
-					if(getXPixPerUnit() > 2) {// 2 is min size
+					if(getXPixPerUnit() > 2) {
+						// 2 is min size
 						zoomOut();
 					}
 				}
@@ -126,7 +131,8 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		final int rows = sampleTree == null ? 1 : 2;
 		final int cols = geneTree == null ? 3 : 4;
 		if(sampleTree != null) {
-			;//pink_geneTree_sampleTreePanel.add(sampleTree, new GridBagConstraints(cols - 3, rows - 2, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
+			;
+			//pink_geneTree_sampleTreePanel.add(sampleTree, new GridBagConstraints(cols - 3, rows - 2, 1, 1, 0.0, 0.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
 		}
 		if(geneTree != null) {
 			pink_geneTree_sampleTreePanel.add(geneTree, new GridBagConstraints(cols - 4, rows - 1, 1, 1, 0.0, 1.0, GridBagConstraints.CENTER, GridBagConstraints.BOTH, new Insets(0, 0, 0, 0), 0, 0));
@@ -144,15 +150,15 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		scrollPane.getViewport().setScrollMode(JViewport.SIMPLE_SCROLL_MODE);
 		scrollPane.setViewportView(pink_geneTree_sampleTreePanel);
 		scrollPane.revalidate();
-		
+
 		scrollPane.setColumnHeaderView(topPanel);
 		/*
-		    following does not work under OS X 1.4
-		    scrollPane.getInputMap().put(up, "zoom in");
-		    scrollPane.getActionMap().put("zoom in", zoomInAction);
-		    scrollPane.getInputMap().put(down, "zoom out");
-		    scrollPane.getActionMap().put("zoom out", zoomOutAction);
-		  */
+		 *  following does not work under OS X 1.4
+		 *  scrollPane.getInputMap().put(up, "zoom in");
+		 *  scrollPane.getActionMap().put("zoom in", zoomInAction);
+		 *  scrollPane.getInputMap().put(down, "zoom out");
+		 *  scrollPane.getActionMap().put("zoom out", zoomOutAction);
+		 */
 		scrollPane.registerKeyboardAction(zoomInAction, "zoom in", up, JComponent.WHEN_IN_FOCUSED_WINDOW);
 		scrollPane.registerKeyboardAction(zoomOutAction, "zoom out", down, JComponent.WHEN_IN_FOCUSED_WINDOW);
 		setColorConverter(new RowColorConverter(ColorResponse.LINEAR, getMatrix()));
@@ -161,40 +167,45 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 
 
 	/*
-	    public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
-	    if(pageIndex >= 1) {  // only one page available
-	    return Printable.NO_SUCH_PAGE;
-	    }
-	    if(g == null) {
-	    return Printable.NO_SUCH_PAGE;
-	    }
-	    Graphics2D g2     = (Graphics2D) g;
-	    double     scalex = pageFormat.getImageableWidth() / (double) getWidth();
-	    double     scaley = pageFormat.getImageableHeight() / (double) getHeight();
-	    double     scale  = Math.min(scalex, scaley);
-	    g2.translate((int) pageFormat.getImageableX(), (int) pageFormat.getImageableY());
-	    g2.scale(scale, scale);
-	    paintEverything(g2);
-	    return Printable.PAGE_EXISTS;
-	    }
-	  */
+	 *  public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
+	 *  if(pageIndex >= 1) {  // only one page available
+	 *  return Printable.NO_SUCH_PAGE;
+	 *  }
+	 *  if(g == null) {
+	 *  return Printable.NO_SUCH_PAGE;
+	 *  }
+	 *  Graphics2D g2     = (Graphics2D) g;
+	 *  double     scalex = pageFormat.getImageableWidth() / (double) getWidth();
+	 *  double     scaley = pageFormat.getImageableHeight() / (double) getHeight();
+	 *  double     scale  = Math.min(scalex, scaley);
+	 *  g2.translate((int) pageFormat.getImageableX(), (int) pageFormat.getImageableY());
+	 *  g2.scale(scale, scale);
+	 *  paintEverything(g2);
+	 *  return Printable.PAGE_EXISTS;
+	 *  }
+	 */
 	public ColorConverter getColorConverter() {
 		return colorConverter;
 	}
 
+
 	public float getMinValue() {
-		return (float) minValue; // FIXME
+		return (float) minValue;
+		// FIXME
 	}
 
+
 	public float getMaxValue() {
-		return (float) maxValue; // FIXME
+		return (float) maxValue;
+		// FIXME
 	}
+
 
 	/**
 	 *  sets the color converter to use to convert values in this pinkogram to
 	 *  colors.
 	 *
-	 * @param  converter  The new colorConverter value
+	 *@param  converter  The new colorConverter value
 	 */
 	public void setColorConverter(ColorConverter converter) {
 		colorConverter = converter;
@@ -217,9 +228,11 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		updateSize();
 	}
 
+
 	public Dataset getMatrix() {
 		return matrix;
 	}
+
 
 	public void zoomIn() {
 		super.zoomIn();
@@ -227,30 +240,35 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 
 	}
 
+
 	public void zoomOut() {
 		super.zoomOut();
 		updateSize();
 	}
 
+
 	public boolean isShowingFlyOverText() {
 		return showFlyOverText;
 	}
 
+
 	public void setShowFlyOverText(boolean b) {
-		if(showFlyOverText!=b && b) {
+		if(showFlyOverText != b && b) {
 			ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
 			toolTipManager.registerComponent(this);
-		} else if(showFlyOverText!=b && !b) {
+		} else if(showFlyOverText != b && !b) {
 			ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
 			toolTipManager.unregisterComponent(this);
 		}
 		showFlyOverText = b;
-		
+
 	}
+
 
 	public boolean isShowingRowLabels() {
 		return showRowLabels;
 	}
+
 
 	public void setShowRowLabels(boolean b) {
 		if(geneNamesDrawer != null && showRowLabels != b) {
@@ -261,9 +279,11 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		showRowLabels = b;
 	}
 
+
 	public boolean isShowingColumnLabels() {
 		return showColumnLabels;
 	}
+
 
 	public void setShowColumnLabels(boolean b) {
 		if(sampleNamesDrawer != null && showColumnLabels != b) {
@@ -278,7 +298,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 	/**
 	 *  invoked when user changes selection of genes with the mouse
 	 *
-	 * @param  clearGeneTreeSelection  Description of the Parameter
+	 *@param  clearGeneTreeSelection  Description of the Parameter
 	 */
 	void geneSelectionChanged(boolean clearGeneTreeSelection) {
 		geneNamesDrawer.repaint();
@@ -289,10 +309,11 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		repaint();
 	}
 
+
 	/**
 	 *  invoked when user changes selection of samples with the mouse
 	 *
-	 * @param  clearSampleTreeSelection  Description of the Parameter
+	 *@param  clearSampleTreeSelection  Description of the Parameter
 	 */
 	void sampleSelectionChanged(boolean clearSampleTreeSelection) {
 		sampleNamesDrawer.repaint();
@@ -303,6 +324,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 
 		repaint();
 	}
+
 
 	public void nodeSelectionChanged(NodeSelectionEvent e) {
 		int index1 = e.getIndex1();
@@ -319,6 +341,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		}
 
 	}
+
 
 	public void updateSize() {
 		pinkOGramWidth = getIntXPixPerUnit() * nx;
@@ -354,32 +377,29 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		int height = header.updateSize(getIntXPixPerUnit() * nx);
 		header.setPreferredSize(new Dimension(totalWidth, height + 4));
 		header.setSize(new Dimension(totalWidth, height + 4));
-		
 
 		if(sampleNamesDrawer != null) {
 			sampleNamesDrawer.updateSize(totalWidth);
 		}
 
 		topPanel.revalidate();
-		
-		
-		
+
+
 		pink_geneTree_sampleTreePanel.repaint();
 		sampleNamesDrawer.revalidate();
 		sampleNamesDrawer.doLayout();
-		
+
 		(((SrollablePanel)
-		pink_geneTree_sampleTreePanel)).setHeight(pinkOGramHeight);
+				pink_geneTree_sampleTreePanel)).setHeight(pinkOGramHeight);
 		pink_geneTree_sampleTreePanel.revalidate();
-	
+
 		headerPanel.repaint();
 
-		
 		scrollPane.revalidate();
 
 		scrollPane.getViewport().doLayout();
 		scrollPane.doLayout();
-		
+
 		scrollPane.repaint();
 	}
 
@@ -394,16 +414,16 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		String columnId = matrix.getName(x);
 		sb.append(rowId);
 		if(y >= 0 && y < ny && x >= 0 && x < nx) {
-			
+
 			sb.append(rowId);
 			sb.append(", ");
 			sb.append(columnId);
-		//	sb.append("<br>");
-		//	sb.append(matrix.getRowDescription(y));
-		//	sb.append("<br>");
-		//	sb.append(matrix.getDescription(x));
-		//	sb.append("<br>");
-			
+			//	sb.append("<br>");
+			//	sb.append(matrix.getRowDescription(y));
+			//	sb.append("<br>");
+			//	sb.append(matrix.getDescription(x));
+			//	sb.append("<br>");
+
 			return "<html> " + sb.toString() + "<br>Value: " + String.valueOf(matrix.get(y, x)) + "</html>";
 		}
 		return null;
@@ -416,7 +436,8 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			stringbuf.append(text);
 			final String BR = "<br>";
 			//start at the last insert and go backwards
-			for(int i = (text.length() / limit) * limit; i > 0; i -= limit) {//reverse loop
+			for(int i = (text.length() / limit) * limit; i > 0; i -= limit) {
+				//reverse loop
 				stringbuf.insert(i, BR);
 			}
 			return stringbuf.toString();
@@ -424,15 +445,19 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		return text;
 	}
 
+
 	public JComponent getComponent() {
 		return scrollPane;
 	}
 
 
 	public void paintComponent(Graphics g) {
-
 		super.paintComponent(g);
+		draw(g);
+	}
 
+
+	public void draw(Graphics g) {
 		int xCellSize = getIntXPixPerUnit();
 		int yCellSize = Math.abs(getIntYPixPerUnit());
 		//Graphics2D g2 = (Graphics2D)g;
@@ -440,17 +465,22 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		//g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
 		// only paint cells that are showing
 		Rectangle bounds = g.getClipBounds();
-		int top = (int) Math.min(ny, ny - bounds.y / Math.abs(getIntYPixPerUnit()));// top must <= ny
-		int bottom = (int) Math.max(0, ny - 2 - (bounds.y + bounds.height) / Math.abs(getIntYPixPerUnit()) + 1);// bottom must be >= 0
-		int left = (int) Math.max(0, bounds.x / getIntXPixPerUnit());
-		int right = (int) Math.min(nx, (bounds.x + bounds.width) / getIntXPixPerUnit() + 1);
-
+		int top = ny;
+		int bottom = 0;
+		int left = 0;
+		int right = nx;
+		if(bounds != null) {
+			top = (int) Math.min(ny, ny - bounds.y / Math.abs(getIntYPixPerUnit()));
+			// top must <= ny
+			bottom = (int) Math.max(0, ny - 2 - (bounds.y + bounds.height) / Math.abs(getIntYPixPerUnit()) + 1);
+			// bottom must be >= 0
+			left = (int) Math.max(0, bounds.x / getIntXPixPerUnit());
+			right = (int) Math.min(nx, (bounds.x + bounds.width) / getIntXPixPerUnit() + 1);
+		}
 		for(int iy = bottom; iy < top; iy++) {
-
 			for(int ix = left; ix < right; ix++) {
 				float val = (float) matrix.get(iy, ix);
 				Color c = colorConverter.getColor(iy, ix);
-
 				g.setColor(c);
 				int xpix = xToPix(ix);
 				int ypix = yToPix(iy + 1);
@@ -460,11 +490,13 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		}
 
 		Rectangle sampleRect = null;
-		if(leftSelectedSampleIndex >= 0) {// samples are selected
+		if(leftSelectedSampleIndex >= 0) {
+			// samples are selected
 
 			int ystart = 0;
 			int yend = 0;
-			if(bottomSelectedGeneIndex >= 0) {//genes are selected
+			if(bottomSelectedGeneIndex >= 0) {
+				//genes are selected
 				ystart = yToPix(topSelectedGeneIndex);
 				yend = yToPix(bottomSelectedGeneIndex);
 			} else {
@@ -478,10 +510,12 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		}
 
 		Rectangle geneRect = null;
-		if(bottomSelectedGeneIndex >= 0) {// genes are selected
+		if(bottomSelectedGeneIndex >= 0) {
+			// genes are selected
 			int xstart = 0;
 			int xend = 0;
-			if(leftSelectedSampleIndex >= 0) {// samples are selected //leftSelectedSampleIndex > left &&
+			if(leftSelectedSampleIndex >= 0) {
+				// samples are selected //leftSelectedSampleIndex > left &&
 				xstart = xToPix(leftSelectedSampleIndex);
 				xend = xToPix(rightSelectedSampleIndex);
 			} else {
@@ -515,12 +549,52 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 //		long elapsed = System.currentTimeMillis() - start;
 		//System.out.println("elapsed " + elapsed/1000.0);
 	}
+
 // size of header and gene tree
+
+
+	public BufferedImage heatMapSnapshot() {
+		int heatMapWidth = getIntXPixPerUnit() * nx;
+		int heatMapHeight = getIntYPixPerUnit() * ny;
+
+		sampleNamesDrawer.updateSize(heatMapWidth);
+		geneNamesDrawer.updateSize();
+		int totalWidth = heatMapWidth;
+		totalWidth += 100;
+		// for gene names
+		int totalHeight = heatMapHeight;
+		totalHeight += 100;
+		// for sample names
+
+		final BufferedImage image = new BufferedImage(totalWidth, totalHeight, BufferedImage.TYPE_INT_ARGB);
+		//TYPE_3BYTE_BGR
+		Graphics2D g = image.createGraphics();
+
+		g.setColor(Color.white);
+		g.fillRect(0, 0, image.getWidth(), image.getHeight());
+
+		g.setColor(Color.black);
+		g.setFont(new Font("monospaced", Font.PLAIN, getIntXPixPerUnit()));
+		java.awt.geom.AffineTransform temp = g.getTransform();
+		sampleNamesDrawer.draw(g, true);
+
+		g.setTransform(temp);
+		g.translate(0, 100);
+		this.draw(g);
+		g.translate(heatMapWidth, 0);
+		g.setFont(new Font("monospaced", Font.PLAIN, getIntYPixPerUnit()));
+		g.setColor(Color.black);
+		geneNamesDrawer.draw(g);
+
+		g.dispose();
+		return image;
+	}
+
 
 	/**
 	 *  creates a snapshot of this pinkogram
 	 *
-	 * @return    the snapshot
+	 *@return    the snapshot
 	 */
 	public BufferedImage snapshot() {
 		updateSize();
@@ -533,32 +607,40 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		int imageHeight = getIntYPixPerUnit() * ny;
 		int headerHeight = headerPanel.getHeight();
 		imageHeight += headerHeight;
-		
-		final BufferedImage image = new BufferedImage(width, imageHeight, BufferedImage.TYPE_INT_ARGB);//TYPE_3BYTE_BGR
+
+		final BufferedImage image = new BufferedImage(width, imageHeight, BufferedImage.TYPE_INT_ARGB);
+		//TYPE_3BYTE_BGR
 		Graphics2D g = image.createGraphics();
 		g.setColor(Color.white);
 		g.fillRect(0, 0, image.getWidth(), image.getHeight());
 
-		headerPanel.paint(g);// header panel contains sample tree and sample names
+		headerPanel.paint(g);
+		// header panel contains sample tree and sample names
 		g.translate(0, headerHeight);
 		pinkOGramAndGeneNamesPanel.paint(g);
 		g.dispose();
 		return image;
 	}
 
-	class GeneNames extends JPanel {//implements Scrollable {
+
+
+	class GeneNames extends JPanel {
+		//implements Scrollable {
 		int maxWidth;
 		boolean visible = true;
 		int lastYIndex;
+
 
 		public GeneNames() {
 			setBackground(Color.white);
 			//	setAutoscrolls(true);
 			addMouseListener(
 				new MouseAdapter() {
-					public void mousePressed(MouseEvent e) {// start of selection
+					public void mousePressed(MouseEvent e) {
+						// start of selection
 						int y = e.getY();
-						topSelectedGeneIndex = (int) pixToY(y);// if click on 0th cell, top = 1 and bottom = 0
+						topSelectedGeneIndex = (int) pixToY(y);
+						// if click on 0th cell, top = 1 and bottom = 0
 						topSelectedGeneIndex++;
 						bottomSelectedGeneIndex = topSelectedGeneIndex - 1;
 						lastYIndex = y;
@@ -572,16 +654,19 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 						updateMouse(e);
 						Rectangle r = null;
 						if(e.getY() <= 0) {
-							r = new Rectangle(e.getX(), e.getY()-getIntYPixPerUnit(), getIntXPixPerUnit(), getIntYPixPerUnit());// this rectangle becomes visible
-						
-						} else  {
-						 r = new Rectangle(e.getX(), e.getY(), getIntXPixPerUnit(), getIntYPixPerUnit());// this rectangle becomes visible
-						((JPanel) e.getSource()).scrollRectToVisible(r);
+							r = new Rectangle(e.getX(), e.getY() - getIntYPixPerUnit(), getIntXPixPerUnit(), getIntYPixPerUnit());
+							// this rectangle becomes visible
+
+						} else {
+							r = new Rectangle(e.getX(), e.getY(), getIntXPixPerUnit(), getIntYPixPerUnit());
+							// this rectangle becomes visible
+							((JPanel) e.getSource()).scrollRectToVisible(r);
 						}
 						geneSelectionChanged(true);
 					}
 				});
 		}
+
 
 		private void updateMouse(MouseEvent e) {
 			int y = e.getY();
@@ -589,7 +674,8 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			// when moving up, update top index if click > top, else update bottom index
 
 			if(index > lastYIndex) {
-				if(lastYIndex < topSelectedGeneIndex && index >= topSelectedGeneIndex) {//crossover
+				if(lastYIndex < topSelectedGeneIndex && index >= topSelectedGeneIndex) {
+					//crossover
 					bottomSelectedGeneIndex = topSelectedGeneIndex - 1;
 					topSelectedGeneIndex = index;
 				} else if(index >= topSelectedGeneIndex) {
@@ -599,10 +685,12 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 					//System.out.println("2");
 					bottomSelectedGeneIndex = index;
 				}
-			} // when moving down, update bottom index if click < bottom, else update top index
+			}
+			// when moving down, update bottom index if click < bottom, else update top index
 			else {
 
-				if(lastYIndex > bottomSelectedGeneIndex && index <= bottomSelectedGeneIndex) {//crossover
+				if(lastYIndex > bottomSelectedGeneIndex && index <= bottomSelectedGeneIndex) {
+					//crossover
 					topSelectedGeneIndex = bottomSelectedGeneIndex + 1;
 					bottomSelectedGeneIndex = index;
 				} else if(index <= bottomSelectedGeneIndex) {
@@ -622,6 +710,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			this.visible = visible;
 			super.setVisible(visible);
 		}
+
 
 		public void updateSize() {
 			setFont(new Font("monospaced", Font.PLAIN, Math.abs(getIntYPixPerUnit())));
@@ -644,24 +733,38 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			g.dispose();
 		}
 
+
 		public void paintComponent(Graphics g) {
 			super.paintComponent(g);
 			if(!visible) {
 				return;
 			}
+			draw(g);
+		}
+
+
+		public void draw(Graphics g) {
 			Graphics2D g2 = (Graphics2D) g;
 
 			FontMetrics fm = g2.getFontMetrics();
 			int h = fm.getAscent();
 			Rectangle bounds = g.getClipBounds();
-			int top = (int) Math.min(ny, ny - bounds.y / Math.abs(getIntYPixPerUnit()));// top must <= ny
-			int bottom = (int) Math.max(0, ny - 2 - (bounds.y + bounds.height) / Math.abs(getIntYPixPerUnit()) + 1);// bottom must be >= 0
-			int left = (int) Math.max(0, bounds.x / getIntXPixPerUnit());
-			int right = (int) Math.min(nx, (bounds.x + bounds.width) / getIntXPixPerUnit() + 1);
-
+			int top = ny;
+			int bottom = 0;
+			int left = 0;
+			int right = nx;
+			if(bounds != null) {
+				top = (int) Math.min(ny, ny - bounds.y / Math.abs(getIntYPixPerUnit()));
+				// top must <= ny
+				bottom = (int) Math.max(0, ny - 2 - (bounds.y + bounds.height) / Math.abs(getIntYPixPerUnit()) + 1);
+				// bottom must be >= 0
+				left = (int) Math.max(0, bounds.x / getIntXPixPerUnit());
+				right = (int) Math.min(nx, (bounds.x + bounds.width) / getIntXPixPerUnit() + 1);
+			}
 			for(int i = bottom; i < top; i++) {
 				String s = matrix.getRowName(i);
-				g2.drawString(s, 0, yToPix(i + 1) + h );// fix height
+				g2.drawString(s, 0, yToPix(i + 1) + h);
+				// fix height
 			}
 
 			if(bottomSelectedGeneIndex != -1) {
@@ -676,17 +779,22 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 	class SampleNames extends JPanel {
 		int maxWidth;
 		int lastXIndex;
-		int gutter = 0;// FIXME delete this variable
+		int gutter = 0;
+		// FIXME delete this variable
+
 //	    scrollPane.scrollRectToVisible(new Rectangle(new Point(0, canvas.getHeight())));
+
 		public SampleNames() {
 			setBackground(Color.white);
 			setPreferredSize(new Dimension(100, 100));
 			addMouseListener(
 				new MouseAdapter() {
-					public void mousePressed(MouseEvent e) {// start of selection
+					public void mousePressed(MouseEvent e) {
+						// start of selection
 						int x = e.getX() - gutter;
 
-						leftSelectedSampleIndex = (int) pixToX(x);// if click on 0th cell, left = 0 and right = 1
+						leftSelectedSampleIndex = (int) pixToX(x);
+						// if click on 0th cell, left = 0 and right = 1
 
 						rightSelectedSampleIndex = leftSelectedSampleIndex + 1;
 
@@ -700,12 +808,12 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 					}
 
 					/*
-					    public void mouseReleased(MouseEvent e) {// end selection
-					    updateMouse(e);
-					    HCL.this.repaint();
-					    repaint();
-					    }
-					  */
+					 *  public void mouseReleased(MouseEvent e) {// end selection
+					 *  updateMouse(e);
+					 *  HCL.this.repaint();
+					 *  repaint();
+					 *  }
+					 */
 				});
 
 			addMouseMotionListener(
@@ -719,6 +827,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 				});
 		}
 
+
 		private void updateMouse(MouseEvent e) {
 			int x = e.getX() - gutter;
 			int index = (int) pixToX(x);
@@ -731,7 +840,8 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			//	System.out.println("index " + index + " leftSelectedSampleIndex " + leftSelectedSampleIndex + " rightSelectedSampleIndex " + rightSelectedSampleIndex);
 			// when moving right
 			if(index > lastXIndex) {
-				if(lastXIndex < rightSelectedSampleIndex && index >= rightSelectedSampleIndex) {//crossover
+				if(lastXIndex < rightSelectedSampleIndex && index >= rightSelectedSampleIndex) {
+					//crossover
 					leftSelectedSampleIndex = rightSelectedSampleIndex - 1;
 					rightSelectedSampleIndex = index;
 				} else if(index >= rightSelectedSampleIndex) {
@@ -741,10 +851,12 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 					//	System.out.println("2");
 					leftSelectedSampleIndex = index;
 				}
-			} // when moving down, update bottom index if click < bottom, else update top index
+			}
+			// when moving down, update bottom index if click < bottom, else update top index
 			else {
 
-				if(lastXIndex > leftSelectedSampleIndex && index <= leftSelectedSampleIndex) {//crossover
+				if(lastXIndex > leftSelectedSampleIndex && index <= leftSelectedSampleIndex) {
+					//crossover
 					rightSelectedSampleIndex = leftSelectedSampleIndex + 1;
 					leftSelectedSampleIndex = index;
 				} else if(index <= leftSelectedSampleIndex) {
@@ -785,13 +897,23 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 
 		public void paintComponent(Graphics g) {
 			super.paintComponent(g);
+			draw(g, false);
+		}
+
+
+		public void draw(Graphics g, boolean forSnapShot) {
 			Graphics2D g2 = (Graphics2D) g;
 			FontMetrics fm = g2.getFontMetrics();
 			g2.rotate(Math.toRadians(-90));
-		
+
 			int y = -getHeight() + 5;
+			if(forSnapShot) {
+				// FIXME incredibly bad hack
+				y = -95;
+			}
+
 			int descent = fm.getDescent();
-			
+
 			float x = (float) (getIntXPixPerUnit() / 2) + gutter;
 
 			for(int i = 0; i < nx; i++) {
@@ -822,20 +944,25 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		Dimension preferredScrollableViewportSize = new Dimension(450, 400);
 
 		int height;
-		
+
+
 		public SrollablePanel() {
-			setAutoscrolls(true);	
+			setAutoscrolls(true);
 		}
-		 
+
+
 		public void setHeight(int i) {
-			height = i;	
+			height = i;
 		}
+
+
 		public Dimension getPreferredSize() {
-			Dimension d = super.	getPreferredSize();
+			Dimension d = super.getPreferredSize();
 			d.height = height;
 			return d;
 		}
-		
+
+
 		public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
 			//System.out.println("getScrollableUnitIncrement");
 			if(orientation == SwingConstants.HORIZONTAL) {
@@ -844,23 +971,27 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			return getIntYPixPerUnit();
 		}
 
+
 		public Dimension getPreferredScrollableViewportSize() {
 			return preferredScrollableViewportSize;
 		}
+
 
 		public boolean getScrollableTracksViewportHeight() {
 			//	System.out.println("getScrollableTracksViewportHeight");
 			return false;
 		}
 
+
 		public boolean getScrollableTracksViewportWidth() {
 			//	System.out.println("getScrollableTracksViewportWidth");
 			return false;
 		}
 
+
 		public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation,
 				int direction) {
-		
+
 			if(orientation == SwingConstants.VERTICAL) {
 				int rh = getIntYPixPerUnit();
 				return (rh > 0) ? Math.max(rh, (visibleRect.height / rh) * rh) : visibleRect.height;
