@@ -29,26 +29,6 @@ public class CdtParser {
 
 	
 	public static void main(String[] args) {
-
-	/*	CmdLineParser parser = new CmdLineParser();
-		// NOTE we check for .gtr file and .atr file even if not specified on command line
-		CmdLineParser.Option cdtOption = parser.addStringOption('f', "cdt_filename");
-		CmdLineParser.Option gtrOption = parser.addStringOption('r', "gtr_filename");
-		CmdLineParser.Option atrOption = parser.addStringOption('c', "atr_filename");
-		try {
-			parser.parse(args);
-		} catch(CmdLineParser.OptionException e) {
-			System.err.println(e.getMessage());
-			System.exit(2);
-		}
-
-		String cdtFileName = (String) parser.getOptionValue(cdtOption);
-		CdtParser cdtParser = new CdtParser();
-		if(cdtFileName == null) {
-			System.err.println("Usage: java CdtParser -f cdt_file [-r gtr_file] [-c atr_file]");
-			return;
-		}*/
-		
 		String cdtFileName = args[0];
 		String atrFileName = null;
 		String gtrFileName = null;
@@ -81,11 +61,10 @@ public class CdtParser {
 			System.exit(2);
 		}
 
-		// String gtrFileName = (String) parser.getOptionValue(gtrOption); ignored
 		Dendrogram geneTree = null;
 		if(cdtParser.geneTreeRoot != null) {
 			try {
-				geneTree = new Dendrogram(cdtParser.geneTreeRoot, Dendrogram.LEFT_ORIENTATION);
+				geneTree = new Dendrogram(cdtParser.geneTreeRoot, SwingConstants.HORIZONTAL);
 				geneTree.setLeafNodeSpacing(0, 4);
 			} catch(Exception e) {
 				System.err.println("Parsing of gtr file failed.");
@@ -93,11 +72,11 @@ public class CdtParser {
 				System.exit(2);
 			}
 		}
-		//	String atrFileName = (String) parser.getOptionValue(atrOption); ignored
+		
 		Dendrogram sampleTree = null;
 		if(cdtParser.arrayTreeRoot != null) {
 			try {
-				sampleTree = new Dendrogram(cdtParser.arrayTreeRoot, Dendrogram.TOP_ORIENTATION);
+				sampleTree = new Dendrogram(cdtParser.arrayTreeRoot, SwingConstants.VERTICAL);
 				sampleTree.setLeafNodeSpacing(0, 4);
 			} catch(Exception e) {
 				System.err.println("Parsing of atr file failed.");

@@ -1,174 +1,35 @@
 package edu.mit.genome.gp.ui.hclviewer;
 import java.awt.*;
 import java.awt.event.*;
-import javax.swing.*;
 import java.awt.geom.*;
 import java.util.*;
-import java.awt.image.*;
+import javax.swing.*;
+import javax.swing.event.*;
 
-//FIXME have common superclass
-public class Dendrogram extends PixPanelForDend {
-	// the position of the leftmost leaf is 1 leaf nodes start at 1 and increase by 1. Position(parent) = (Position(left child) + Position(right child))/2
+public class Dendrogram extends ZoomPanel {
+	// the position of the leftmost leaf is 1. Leaf nodes position start at 1 and increase by 1. Position(parent) = (Position(left child) + Position(right child))/2
 	TreeNode root;
-	short orientation;
 	Color nodeColor = new Color(0, 0, 128);
 	Color selectedNodeColor = Color.yellow;
 	TreeNode selectedNode = null;// the root of the selected branch
 	Map selectedNodes = new HashMap();
-	NodeSelectionListener nodeSelectionListener;
 	int numLeaves = 0;
 
-	public static short TOP_ORIENTATION = 1;
-	public static short LEFT_ORIENTATION = 2;
-	
-	/** min and max distances or correlations */
-	double min = Double.MAX_VALUE;
-	double max = Double.MIN_VALUE;
-	
-	public static void main(String[] args) {
-		JFrame f = new JFrame();
-		
-		TreeNode left= new TreeNode(null, null, 1, "1");
-		left.correlation = -20.733477;
-		left.position = 0;
-		
-		TreeNode right= new TreeNode(null, null, 1, "2");
-		right.correlation = -22.908957;
-		right.position = 10;
-		
-		TreeNode root= new TreeNode(left, right, 1, "3");
-		root.correlation = -23.378288;
-		
-		Dendrogram d = new Dendrogram(root, Dendrogram.LEFT_ORIENTATION);
-		d.setLeafNodeSpacing(0,4);
-		f.getContentPane().add(d, BorderLayout.CENTER);
-		f.setSize(400,400);
-		f.show();
-	}
-	
-	public Dendrogram(TreeNode root, short orientation) {
+	/**  min and max distances or correlations */
+	double minTreeHeight = Double.MAX_VALUE;
+	double maxTreeHeight = -Double.MAX_VALUE;
+
+	EventListenerList nodeSelectionListeners = new EventListenerList();
+
+	public Dendrogram(TreeNode root, int orientation) {
 		super();
 		this.root = root;
+		setLeafNodeSpacing(0, 10);
 		addMouseListener(new DendrogramMouseListener());
-		calculateLeafPositions(0, root);
 		calculateInternalNodePositions(root);
-		
 		setOrientation(orientation);
-		setBackground(Color.white);
-	
-/*	try {
-		selectedNode = findCommonAncestor(1, 2);
-		System.out.println("selectedNode " + selectedNode.id);
-		updateSelectedNodes(selectedNode);
-		
-	} catch(Exception e){}
-		//debug
-		
-		    System.out.println("numLeaves " + numLeaves + " leafNodes.size() " + leafNodes.size());
-		    for(int i = 0, size = leafNodes.size(); i < size; i++) {
-		    TreeNode t = (TreeNode) leafNodes.get(i);
-		    System.out.println(t.id);
-		    }
-		 */
 	}
 
-	private void updateSelectedNodes(TreeNode selectedNode) {
-			java.util.List tempQ = new LinkedList();
-			tempQ.add(selectedNode);
-			while(!tempQ.isEmpty()) {
-				TreeNode node = (TreeNode) tempQ.remove(0);
-				selectedNodes.put(node.id, Boolean.TRUE);
-				TreeNode left = node.left;
-				TreeNode right = node.right;
-				if(left != null && (left.left != null || left.right != null)) {// don't add leaf nodes to q
-					tempQ.add(left);
-				}
-				if(right != null && (right.left != null || right.right != null)) {// don't add leaf nodes to q
-					tempQ.add(right);
-				}
-			}
-		}
-		
-	
-/*	private TreeNode findCommonAncestor(double position1, double position2) {
-		TreeNode leftFinger = root;
-		TreeNode rightFinger = root;
-		
-		TreeNode beforeLeftFinger = null;
-		
-		while(leftFinger==rightFinger) { // find the 1st node where pointers diverge
-			beforeLeftFinger = leftFinger;
-			if(leftFinger.position < position1) {
-				System.out.println("leftFinger = leftFinger.right;");
-				leftFinger = leftFinger.right;
-			} else if(leftFinger.position > position1){ // if(leftFinger.position > index1) {
-				System.out.println("leftFinger = leftFinger.left;");
-				leftFinger = leftFinger.left;
-			} 
-			
-			if(rightFinger.position < position2) {
-				System.out.println("rightFinger = rightFinger.right;");
-				rightFinger = rightFinger.right;
-			} else if(rightFinger.position > position2) { // if(leftFinger.position > index1) {
-				System.out.println("rightFinger = rightFinger.left;");
-				rightFinger = rightFinger.left;
-			} 
-		}
-		return leftFinger;
-		
-	} */
-
-	/**
-	 *  Sets the listener to be notified when a node selection is changed
-	 *
-	 * @param  l  The new nodeSelectionListener value
-	 */
-	public void setNodeSelectionListener(NodeSelectionListener l) {
-		nodeSelectionListener = l;
-	}
-
-	public int xToPix(double x) {
-		if(orientation == TOP_ORIENTATION ) {
-			return super.xToPix(x);
-		}
-		return super.yToPix(x);
-		//	double pix = (x - xmin) * xPixPerUnit + leftGutter;
-		//	return (int) Math.round(pix);
-	}
-
-	public int yToPix(double y) {
-		if(orientation == TOP_ORIENTATION ) {
-			return super.yToPix(y);
-			//return (int) (getHeight() * y);
-		}
-		return super.xToPix(y);
-		//return (int) (getWidth() * y);
-	}
-
-	/**
-	 *  Sets the orientation for this dendrogram. Typically gene trees have a left
-	 *  orientation and array trees have a top orientation.
-	 *
-	 * @param  o  The new orientation value
-	 */
-	private void setOrientation(short orientation) {
-		this.orientation = orientation;
-//		int numLeaves = leafNodes.size();
-
-		if(orientation == TOP_ORIENTATION) {
-			//setMinMaxY(0, 1);  
-			setMinMaxY(max, min);
-			setComputeYScale(true);
-			setMinMaxX(-0.5, numLeaves - 0.5);
-			
-		} else if(orientation == LEFT_ORIENTATION) {
-			setMinMaxY(-0.5, numLeaves - 0.5);
-			setMinMaxX(min, max);
-			setComputeXScale(true);
-		} else {
-			throw new IllegalArgumentException("Unknown orientation.");	
-		}
-	}
 
 	/**
 	 *  if orientation is vertical start is the x location in pixels to start
@@ -178,69 +39,70 @@ public class Dendrogram extends PixPanelForDend {
 	 * @param  start  The new leafNodeSpacing value
 	 * @param  width  The new leafNodeSpacing value
 	 */
-	public void setLeafNodeSpacing(double start, double width) {
-		if(orientation == LEFT_ORIENTATION ) {
+	public void setLeafNodeSpacing(int start, int width) {
+		if(getOrientation() == SwingConstants.HORIZONTAL) {
 			setYPixPerUnit(width);
-			setTopGutter((int) start);//FIXME
-
-			//	setPreferredSize(new Dimension(400, (int)(topGutter+leafNodes.size()*yPixPerUnit)));
+			setTopGutter(start);
 		} else {
 			setXPixPerUnit(width);
-			setLeftGutter((int) start);
-
-			//	setPreferredSize(new Dimension((int)(leftGutter+leafNodes.size()*xPixPerUnit), 400));
+			setLeftGutter(start);
 		}
 
 	}
+
 
 	/**
-	 *  a postorder traveral of the tree to calculate leaf positions
+	 *  Sets the orientation for this dendrogram. Typically gene trees have a
+	 *  SwingConstants.HORIZONTAL orientation and array trees have a
+	 *  SwingConstants.VERTICAL orientation.
 	 *
-	 * @param  pos   Description of the Parameter
-	 * @param  node  Description of the Parameter
-	 * @return       Description of the Return Value
+	 * @param  orientation  The new orientation value
 	 */
-	private int calculateLeafPositions(int pos, TreeNode node) {
-		if(node.left != null) {
-		//	pos = 
-			calculateLeafPositions(pos, node.left);
-		}
-		if(node.right != null) {
-			//pos = 
-			calculateLeafPositions(pos, node.right);
+	public void setOrientation(int orientation) {
+		super.setOrientation(orientation);
+		if(orientation == SwingConstants.VERTICAL) {
+			setMinMaxY(maxTreeHeight, minTreeHeight);
+			setComputeYScale(true);// autoscale y
+
+			setMinMaxX(-0.5, numLeaves - 0.5);
+		} else if(orientation == SwingConstants.HORIZONTAL) {
+			setMinMaxX(minTreeHeight, maxTreeHeight);
+			setComputeXScale(true);// autoscale x
+			setMinMaxY(-0.5, numLeaves - 0.5);
 		} else {
-			numLeaves++;
-		//	node.position = pos;
-			pos++;
-			min = Math.min(min, node.correlation);
-			max = Math.max(max, node.correlation);
-			
+			throw new IllegalArgumentException("Unknown orientation.");
 		}
-		
-		return pos;
-		
 	}
 
-	private void calculateInternalNodePositions(TreeNode node) {
-		if(node.left == null) {
-			return;
-		}
 
-		calculateInternalNodePositions(node.left);
-		calculateInternalNodePositions(node.right);
-	 	//node.height = 1.0 - ((1.0 - node.correlation) / 2.0);
-		node.height = node.correlation; // FIXME
-		node.height = Math.min(node.height, node.left.height);
-		node.height = Math.min(node.height, node.right.height);
-		node.position = (node.left.position + node.right.position) / 2.0;
-		
-		min = Math.min(min, node.correlation);
-		max = Math.max(max, node.correlation);
+	public static void main(String[] args) {
+		JFrame f = new JFrame();
+		TreeNode left = new TreeNode(null, null, 1, "1"); // FIXME ?? height of node > heat of parent
+		left.position = 0;
+		TreeNode right = new TreeNode(null, null, 1, "2");
+		right.position = 1;
+		TreeNode root = new TreeNode(left, right, 0.5, "3");
+		Dendrogram d = new Dendrogram(root, SwingConstants.VERTICAL);
+		d.setTopGutter(10);
+		d.setBottomGutter(10);
+		f.getContentPane().add(d);
+		f.setSize(400, 400);
+		f.show();
 
 	}
 
 
-	public void  paintComponent(Graphics g) {
+	/**
+	 *  Adds a listener to be notified when a node selection is changed
+	 *
+	 * @param  l  The new nodeSelectionListener value
+	 */
+	public void addNodeSelectionListener(NodeSelectionListener l) {
+		nodeSelectionListeners.add(NodeSelectionListener.class, l);
+	}
+
+
+	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
 		Graphics2D g2 = (Graphics2D) g;
 		Line2D.Double line = new Line2D.Double();
@@ -260,33 +122,31 @@ public class Dendrogram extends PixPanelForDend {
 				q.add(rightRhild);
 			}
 			double currentNodeHeight = currentNode.height;
-			double left_child_height = (leftChild == null) ? 0 : leftChild.height;
+			double left_child_height = (leftChild == null) ? 0 : leftChild.height;//FIXME check this, don't think need if
 			double right_child_height = (rightRhild == null) ? 0 : rightRhild.height;
 			double pixHeight = yToPix(currentNodeHeight);
-			double xPix1 = xToPix(leftChild.position); // when left orientation gives y pixel coordinate
-			double xPix2 = xToPix(rightRhild.position);
 
-	//		System.out.println("leftChild.position " + leftChild.position + " xPix1 " + xPix1);
-	//		System.out.println("rightRhild.position " + rightRhild.position + " xPix2 " + xPix2);
+			double xPix1 = xToPix(leftChild.position);// when left orientation gives y pixel coordinate
+			double xPix2 = xToPix(rightRhild.position);
 			if(selectedNodes.get(currentNode.id) != null) {
 				g2.setColor(selectedNodeColor);
 			} else {
 				g2.setColor(nodeColor);
 			}
 
-			if(orientation == TOP_ORIENTATION ) {
+			if(getOrientation() == SwingConstants.VERTICAL) {
 				line.setLine(xPix1, pixHeight, xPix1, yToPix(left_child_height));// draw line to left child
 			} else {
 				line.setLine(pixHeight, xPix1, yToPix(left_child_height), xPix1);
 			}
 			g2.draw(line);
-			if(orientation == TOP_ORIENTATION ) {
+			if(getOrientation() == SwingConstants.VERTICAL) {
 				line.setLine(xPix2, pixHeight, xPix2, yToPix(right_child_height));// draw line to right child
 			} else {
 				line.setLine(pixHeight, xPix2, yToPix(right_child_height), xPix2);
 			}
 			g2.draw(line);
-			if(orientation == TOP_ORIENTATION ) {
+			if(getOrientation() == SwingConstants.VERTICAL) {
 				line.setLine(xPix1, pixHeight, xPix2, pixHeight);// connect
 			} else {
 				line.setLine(pixHeight, xPix1, pixHeight, xPix2);
@@ -294,15 +154,69 @@ public class Dendrogram extends PixPanelForDend {
 			g2.draw(line);
 
 		}
-	
+
 	}
 
-	/**  Deselects all nodes  */
+
+	/**  Deselects all nodes */
 	public void clearSelection() {
 		selectedNode = null;
 		selectedNodes.clear();
 	}
 
+
+	private void updateSelectedNodes(TreeNode selectedNode) {
+		java.util.List tempQ = new LinkedList();
+		tempQ.add(selectedNode);
+		while(!tempQ.isEmpty()) {
+			TreeNode node = (TreeNode) tempQ.remove(0);
+			selectedNodes.put(node.id, Boolean.TRUE);
+			TreeNode left = node.left;
+			TreeNode right = node.right;
+			if(left != null && (left.left != null || left.right != null)) {// don't add leaf nodes to q
+				tempQ.add(left);
+			}
+			if(right != null && (right.left != null || right.right != null)) {// don't add leaf nodes to q
+				tempQ.add(right);
+			}
+		}
+	}
+
+
+	/**
+	 *  a postorder traveral of the tree to calculate internal node positions
+	 *
+	 * @param  node  Description of the Parameter
+	 */
+	private void calculateInternalNodePositions(TreeNode node) {
+		if(node.left == null) {// leaf node
+			minTreeHeight = Math.min(minTreeHeight, node.height);
+			maxTreeHeight = Math.max(maxTreeHeight, node.height);
+			numLeaves++;
+		} else {
+			calculateInternalNodePositions(node.left);
+			calculateInternalNodePositions(node.right);
+			//node.height = 1.0 - ((1.0 - node.correlation) / 2.0);
+			node.height = Math.min(node.height, node.left.height);
+			node.height = Math.min(node.height, node.right.height);
+			node.position = (node.left.position + node.right.position) / 2.0;
+			minTreeHeight = Math.min(minTreeHeight, node.height);
+			maxTreeHeight = Math.max(maxTreeHeight, node.height);
+		}
+
+	}
+
+
+
+	private void notifyListeners(int minIndex, int maxIndex) {
+		Object[] listeners = nodeSelectionListeners.getListenerList();
+		NodeSelectionEvent event = new NodeSelectionEvent(this, minIndex, maxIndex);
+		for(int i = listeners.length - 2; i >= 0; i -= 2) {
+			if(listeners[i] == NodeSelectionListener.class) {
+				((NodeSelectionListener) listeners[i + 1]).nodeSelectionChanged(event);
+			}
+		}
+	}
 
 	/**
 	 * @author       jgould
@@ -312,11 +226,12 @@ public class Dendrogram extends PixPanelForDend {
 	private class DendrogramMouseListener extends MouseAdapter {
 		int xMouseClick, yMouseClick;
 
+
 		public void mouseClicked(MouseEvent e) {
 
 			xMouseClick = e.getX();
 			yMouseClick = e.getY();
-			if(orientation == LEFT_ORIENTATION ) {
+			if(getOrientation() == SwingConstants.HORIZONTAL) {
 				int temp = yMouseClick;
 				yMouseClick = xMouseClick;
 				xMouseClick = temp;
@@ -347,31 +262,46 @@ public class Dendrogram extends PixPanelForDend {
 				}
 			}
 
-			if(nodeSelectionListener != null) {
-				int index1 = -1;
-				int index2 = -1;
-				if(selectedNode != null) {
-					TreeNode temp = selectedNode;
-					while(temp.left != null) {
-						temp = temp.left;
-					}
-
-					index1 = (int) temp.position;
-
-					temp = selectedNode;
-					while(temp.right != null) {
-						temp = temp.right;
-					}
-					index2 = (int) temp.position;
+			int index1 = -1;
+			int index2 = -1;
+			if(selectedNode != null) {
+				TreeNode temp = selectedNode;
+				while(temp.left != null) {
+					temp = temp.left;
 				}
-				nodeSelectionListener.nodeSelectionChanged(new NodeSelectionEvent(Dendrogram.this, index1, index2));
+
+				index1 = (int) temp.position;
+
+				temp = selectedNode;
+				while(temp.right != null) {
+					temp = temp.right;
+				}
+				index2 = (int) temp.position;
 			}
+			notifyListeners(index1, index2);
+
 			repaint();
 
 		}
-		
 
-		
+
+		private boolean isSelected(double xPix1, double pixHeight) {
+			// mouse click can be within 5 pixels in any direction of a node to select it
+			/*
+			    if(xMouseClick == -1 || yMouseClick == -1) {
+			    return false;
+			    }
+			  */
+			double xPixDistance = xMouseClick - xPix1;
+			double yPixDistance = yMouseClick - pixHeight;
+			double pixDistance = Math.sqrt(xPixDistance * xPixDistance + yPixDistance * yPixDistance);
+			//	System.out.println("xMouseClick " + xMouseClick + " xPix1 " + xPix1 + " yMouseClick " + pixHeight);
+			if(pixDistance <= 5) {
+
+				return true;
+			}
+			return false;
+		}
 
 
 		private void preOrderTraversal(TreeNode node) {
@@ -389,27 +319,7 @@ public class Dendrogram extends PixPanelForDend {
 			}
 		}
 
-		private boolean isSelected(double xPix1, double pixHeight) {
-			// mouse click can be within 5 pixels in any direction of a node to select it
-			/*
-			    if(xMouseClick == -1 || yMouseClick == -1) {
-			    return false;
-			    }
-			 */
-			double xPixDistance = xMouseClick - xPix1;
-			double yPixDistance = yMouseClick - pixHeight;
-			double pixDistance = Math.sqrt(xPixDistance * xPixDistance + yPixDistance * yPixDistance);
-			//	System.out.println("xMouseClick " + xMouseClick + " xPix1 " + xPix1 + " yMouseClick " + pixHeight);
-			if(pixDistance <= 5) {
-
-				return true;
-			}
-			return false;
-		}
-
 	}
-
-
 
 }
 

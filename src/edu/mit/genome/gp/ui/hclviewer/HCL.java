@@ -23,7 +23,7 @@ import edu.mit.genome.dataobj.jg.*;
  *@created    August 13, 2003
  */
 
-public class HCL extends PixPanel implements NodeSelectionListener {
+public class HCL extends ZoomPanel implements NodeSelectionListener {
 	int pinkOGramWidth, pinkOGramHeight;
 
 	int ny, nx;
@@ -81,10 +81,10 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		this.sampleTree = sampleTree;
 		this.geneTree = geneTree;
 		if(sampleTree != null) {
-			sampleTree.setNodeSelectionListener(this);
+			sampleTree.addNodeSelectionListener(this);
 		}
 		if(geneTree != null) {
-			geneTree.setNodeSelectionListener(this);
+			geneTree.addNodeSelectionListener(this);
 		}
 		ToolTipManager toolTipManager = ToolTipManager.sharedInstance();
 		toolTipManager.registerComponent(this);
@@ -327,8 +327,8 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 
 
 	public void nodeSelectionChanged(NodeSelectionEvent e) {
-		int index1 = e.getIndex1();
-		int index2 = e.getIndex2();
+		int index1 = e.getFirstIndex();
+		int index2 = e.getLastIndex();
 		Object source = e.getSource();
 		if(source == sampleTree) {
 			leftSelectedSampleIndex = index1;
@@ -344,16 +344,16 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 
 
 	public void updateSize() {
-		pinkOGramWidth = getIntXPixPerUnit() * nx;
-		pinkOGramHeight = getIntYPixPerUnit() * ny;
+		pinkOGramWidth = getXPixPerUnitAsInt() * nx;
+		pinkOGramHeight = getYPixPerUnitAsInt() * ny;
 		int totalWidth = pinkOGramWidth;
 		if(sampleTree != null) {
-			sampleTree.setLeafNodeSpacing(0, Math.abs(getIntYPixPerUnit()));
+			sampleTree.setLeafNodeSpacing(0, Math.abs(getYPixPerUnitAsInt()));
 			sampleTree.setPreferredSize(new Dimension(pinkOGramWidth, 200));
 		}
 		if(geneTree != null) {
 			int tWidth = 200;
-			geneTree.setLeafNodeSpacing(0, getIntXPixPerUnit());
+			geneTree.setLeafNodeSpacing(0, getXPixPerUnitAsInt());
 			geneTree.setPreferredSize(new Dimension(tWidth, pinkOGramHeight));
 			geneTree.setMaximumSize(new Dimension(tWidth, pinkOGramHeight));
 			geneTree.setMinimumSize(new Dimension(tWidth, pinkOGramHeight));
@@ -374,7 +374,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		}
 
 		topPanel.setBorder(new javax.swing.border.EmptyBorder(0, leftGutter, 0, 0));
-		int height = header.updateSize(getIntXPixPerUnit() * nx);
+		int height = header.updateSize(getXPixPerUnitAsInt() * nx);
 		header.setPreferredSize(new Dimension(totalWidth, height + 4));
 		header.setSize(new Dimension(totalWidth, height + 4));
 
@@ -458,8 +458,8 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 
 
 	public void draw(Graphics g) {
-		int xCellSize = getIntXPixPerUnit();
-		int yCellSize = Math.abs(getIntYPixPerUnit());
+		int xCellSize = getXPixPerUnitAsInt();
+		int yCellSize = Math.abs(getYPixPerUnitAsInt());
 		//Graphics2D g2 = (Graphics2D)g;
 		//g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_OFF);
 		//g2.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING, RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
@@ -470,20 +470,20 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		int left = 0;
 		int right = nx;
 		if(bounds != null) {
-			top = (int) Math.min(ny, ny - bounds.y / Math.abs(getIntYPixPerUnit()));
+			top = (int) Math.min(ny, ny - bounds.y / Math.abs(getYPixPerUnitAsInt()));
 			// top must <= ny
-			bottom = (int) Math.max(0, ny - 2 - (bounds.y + bounds.height) / Math.abs(getIntYPixPerUnit()) + 1);
+			bottom = (int) Math.max(0, ny - 2 - (bounds.y + bounds.height) / Math.abs(getYPixPerUnitAsInt()) + 1);
 			// bottom must be >= 0
-			left = (int) Math.max(0, bounds.x / getIntXPixPerUnit());
-			right = (int) Math.min(nx, (bounds.x + bounds.width) / getIntXPixPerUnit() + 1);
+			left = (int) Math.max(0, bounds.x / getXPixPerUnitAsInt());
+			right = (int) Math.min(nx, (bounds.x + bounds.width) / getXPixPerUnitAsInt() + 1);
 		}
 		for(int iy = bottom; iy < top; iy++) {
 			for(int ix = left; ix < right; ix++) {
 				float val = (float) matrix.get(iy, ix);
 				Color c = colorConverter.getColor(iy, ix);
 				g.setColor(c);
-				int xpix = xToPix(ix);
-				int ypix = yToPix(iy + 1);
+				int xpix = xToPixAsInt(ix);
+				int ypix = yToPixAsInt(iy + 1);
 				g.fillRect(xpix, ypix, xCellSize, yCellSize);
 			}
 
@@ -497,15 +497,15 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			int yend = 0;
 			if(bottomSelectedGeneIndex >= 0) {
 				//genes are selected
-				ystart = yToPix(topSelectedGeneIndex);
-				yend = yToPix(bottomSelectedGeneIndex);
+				ystart = yToPixAsInt(topSelectedGeneIndex);
+				yend = yToPixAsInt(bottomSelectedGeneIndex);
 			} else {
-				ystart = yToPix(top);
-				yend = yToPix(bottom);
+				ystart = yToPixAsInt(top);
+				yend = yToPixAsInt(bottom);
 			}
 
-			int xstart = xToPix(leftSelectedSampleIndex);
-			int xend = xToPix(rightSelectedSampleIndex);
+			int xstart = xToPixAsInt(leftSelectedSampleIndex);
+			int xend = xToPixAsInt(rightSelectedSampleIndex);
 			sampleRect = new Rectangle(xstart, ystart, xend - xstart, yend - ystart);
 		}
 
@@ -516,16 +516,16 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			int xend = 0;
 			if(leftSelectedSampleIndex >= 0) {
 				// samples are selected //leftSelectedSampleIndex > left &&
-				xstart = xToPix(leftSelectedSampleIndex);
-				xend = xToPix(rightSelectedSampleIndex);
+				xstart = xToPixAsInt(leftSelectedSampleIndex);
+				xend = xToPixAsInt(rightSelectedSampleIndex);
 			} else {
-				xstart = xToPix(left);
-				xend = xToPix(right);
+				xstart = xToPixAsInt(left);
+				xend = xToPixAsInt(right);
 			}
 
-			int bottom_ypix = yToPix(bottomSelectedGeneIndex);
+			int bottom_ypix = yToPixAsInt(bottomSelectedGeneIndex);
 
-			int top_ypix = yToPix(topSelectedGeneIndex);
+			int top_ypix = yToPixAsInt(topSelectedGeneIndex);
 
 			geneRect = new Rectangle(xstart, top_ypix, xend - xstart, bottom_ypix - top_ypix);
 
@@ -554,8 +554,8 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 
 
 	public BufferedImage heatMapSnapshot(org.apache.batik.transcoder.image.ImageTranscoder transcoder) {
-		int heatMapWidth = getIntXPixPerUnit() * nx;
-		int heatMapHeight = getIntYPixPerUnit() * ny;
+		int heatMapWidth = getXPixPerUnitAsInt() * nx;
+		int heatMapHeight = getYPixPerUnitAsInt() * ny;
 
 		sampleNamesDrawer.updateSize(heatMapWidth);
 		geneNamesDrawer.updateSize();
@@ -574,7 +574,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		g.fillRect(0, 0, image.getWidth(), image.getHeight());
 
 		g.setColor(Color.black);
-		g.setFont(new Font("monospaced", Font.PLAIN, getIntXPixPerUnit()));
+		g.setFont(new Font("monospaced", Font.PLAIN, getXPixPerUnitAsInt()));
 		java.awt.geom.AffineTransform temp = g.getTransform();
 		sampleNamesDrawer.draw(g, true);
 
@@ -582,7 +582,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 		g.translate(0, 100);
 		this.draw(g);
 		g.translate(heatMapWidth, 0);
-		g.setFont(new Font("monospaced", Font.PLAIN, getIntYPixPerUnit()));
+		g.setFont(new Font("monospaced", Font.PLAIN, getYPixPerUnitAsInt()));
 		g.setColor(Color.black);
 		geneNamesDrawer.draw(g);
 
@@ -604,7 +604,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			geneTreeWidth = geneTree.getPreferredSize().width;
 			width += geneTreeWidth;
 		}
-		int imageHeight = getIntYPixPerUnit() * ny;
+		int imageHeight = getYPixPerUnitAsInt() * ny;
 		int headerHeight = headerPanel.getHeight();
 		imageHeight += headerHeight;
 
@@ -654,11 +654,11 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 						updateMouse(e);
 						Rectangle r = null;
 						if(e.getY() <= 0) {
-							r = new Rectangle(e.getX(), e.getY() - getIntYPixPerUnit(), getIntXPixPerUnit(), getIntYPixPerUnit());
+							r = new Rectangle(e.getX(), e.getY() - getYPixPerUnitAsInt(), getXPixPerUnitAsInt(), getYPixPerUnitAsInt());
 							// this rectangle becomes visible
 
 						} else {
-							r = new Rectangle(e.getX(), e.getY(), getIntXPixPerUnit(), getIntYPixPerUnit());
+							r = new Rectangle(e.getX(), e.getY(), getXPixPerUnitAsInt(), getYPixPerUnitAsInt());
 							// this rectangle becomes visible
 							((JPanel) e.getSource()).scrollRectToVisible(r);
 						}
@@ -713,7 +713,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 
 
 		public void updateSize() {
-			setFont(new Font("monospaced", Font.PLAIN, Math.abs(getIntYPixPerUnit())));
+			setFont(new Font("monospaced", Font.PLAIN, Math.abs(getYPixPerUnitAsInt())));
 			maxWidth = 0;
 			Graphics g = getGraphics();
 			if(g == null) {
@@ -725,7 +725,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 				int w = fm.stringWidth(s);
 				maxWidth = Math.max(maxWidth, w);
 			}
-			setFont(new Font("monospaced", Font.PLAIN, Math.abs(getIntYPixPerUnit())));
+			setFont(new Font("monospaced", Font.PLAIN, Math.abs(getYPixPerUnitAsInt())));
 			setPreferredSize(new Dimension(20 + maxWidth, getHeight()));
 			setSize(new Dimension(20 + maxWidth, getHeight()));
 			setMinimumSize(new Dimension(20 + maxWidth, getHeight()));
@@ -754,23 +754,23 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			int left = 0;
 			int right = nx;
 			if(bounds != null) {
-				top = (int) Math.min(ny, ny - bounds.y / Math.abs(getIntYPixPerUnit()));
+				top = (int) Math.min(ny, ny - bounds.y / Math.abs(getYPixPerUnitAsInt()));
 				// top must <= ny
-				bottom = (int) Math.max(0, ny - 2 - (bounds.y + bounds.height) / Math.abs(getIntYPixPerUnit()) + 1);
+				bottom = (int) Math.max(0, ny - 2 - (bounds.y + bounds.height) / Math.abs(getYPixPerUnitAsInt()) + 1);
 				// bottom must be >= 0
-				left = (int) Math.max(0, bounds.x / getIntXPixPerUnit());
-				right = (int) Math.min(nx, (bounds.x + bounds.width) / getIntXPixPerUnit() + 1);
+				left = (int) Math.max(0, bounds.x / getXPixPerUnitAsInt());
+				right = (int) Math.min(nx, (bounds.x + bounds.width) / getXPixPerUnitAsInt() + 1);
 			}
 			for(int i = bottom; i < top; i++) {
 				String s = matrix.getRowName(i);
-				g2.drawString(s, 0, yToPix(i + 1) + h);
+				g2.drawString(s, 0, yToPixAsInt(i + 1) + h);
 				// fix height
 			}
 
 			if(bottomSelectedGeneIndex != -1) {
 				g2.setComposite(SRC_OVER_COMPOSITE);
 				g.setColor(Color.yellow);
-				g.fillRect(0, yToPix(topSelectedGeneIndex), getWidth(), yToPix(bottomSelectedGeneIndex) - yToPix(topSelectedGeneIndex));
+				g.fillRect(0, yToPixAsInt(topSelectedGeneIndex), getWidth(), yToPixAsInt(bottomSelectedGeneIndex) - yToPixAsInt(topSelectedGeneIndex));
 			}
 		}
 	}
@@ -820,7 +820,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 				new MouseMotionAdapter() {
 					public void mouseDragged(MouseEvent e) {
 						updateMouse(e);
-						//	Rectangle r = new Rectangle(e.getX(), e.getY(), getIntXPixPerUnit() * 10, getIntYPixPerUnit() * 10);// this rectangle becomes visible
+						//	Rectangle r = new Rectangle(e.getX(), e.getY(), getXPixPerUnitAsInt() * 10, getYPixPerUnitAsInt() * 10);// this rectangle becomes visible
 						//((JPanel) e.getSource()).scrollRectToVisible(r);
 						sampleSelectionChanged(true);
 					}
@@ -873,7 +873,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 
 
 		void updateSize(int width) {
-			setFont(new Font("monospaced", Font.PLAIN, getIntXPixPerUnit()));
+			setFont(new Font("monospaced", Font.PLAIN, getXPixPerUnitAsInt()));
 			Graphics g = getGraphics();
 			if(g == null) {
 				return;
@@ -914,13 +914,13 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 
 			int descent = fm.getDescent();
 
-			float x = (float) (getIntXPixPerUnit() / 2) + gutter;
+			float x = (float) (getXPixPerUnitAsInt() / 2) + gutter;
 
 			for(int i = 0; i < nx; i++) {
 				String s = matrix.getName(i);
 				if(s != null) {
 					g2.drawString(s, y, descent + x);
-					x += (float) getIntXPixPerUnit();
+					x += (float) getXPixPerUnitAsInt();
 				}
 			}
 
@@ -929,9 +929,9 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 				g2.rotate(Math.toRadians(90));
 				g2.setComposite(SRC_OVER_COMPOSITE);
 
-				int xstart = xToPix(leftSelectedSampleIndex);
-				//System.out.println("getIntXPixPerUnit " + getIntXPixPerUnit() + " gutter " + gutter + " xstart " + xstart);
-				int xend = xToPix(rightSelectedSampleIndex);
+				int xstart = xToPixAsInt(leftSelectedSampleIndex);
+				//System.out.println("getXPixPerUnitAsInt " + getXPixPerUnitAsInt() + " gutter " + gutter + " xstart " + xstart);
+				int xend = xToPixAsInt(rightSelectedSampleIndex);
 
 				g.fillRect(xstart + gutter, 0, xend - xstart, getHeight());
 
@@ -968,7 +968,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 			if(orientation == SwingConstants.HORIZONTAL) {
 				return 100;
 			}
-			return getIntYPixPerUnit();
+			return getYPixPerUnitAsInt();
 		}
 
 
@@ -993,7 +993,7 @@ public class HCL extends PixPanel implements NodeSelectionListener {
 				int direction) {
 
 			if(orientation == SwingConstants.VERTICAL) {
-				int rh = getIntYPixPerUnit();
+				int rh = getYPixPerUnitAsInt();
 				return (rh > 0) ? Math.max(rh, (visibleRect.height / rh) * rh) : visibleRect.height;
 			} else {
 				return visibleRect.width;

@@ -7,7 +7,7 @@ package edu.mit.genome.gp.ui.hclviewer;
  * @author     jgould
  * @created    August 19, 2003
  */
-interface NodeSelectionListener {
+interface NodeSelectionListener extends java.util.EventListener {
 
 	/**
 	 * @param  e  notifies the listener of the range of selected leaves

@@ -9,10 +9,8 @@ import java.awt.image.*;
 public class TreeNode {
 	TreeNode left;
 	TreeNode right;
-
-	double correlation;
 	double position;// x coordinate
-	double height;// y coordinate FIXME not needed anymore, or can keep it and update whenever scale changes
+	double height;// y coordinate 
 	Object id;
 	
 	static Line2D.Double line = new Line2D.Double();
@@ -23,12 +21,11 @@ public class TreeNode {
 	 * @param  correlation  correlation, this should be 1 for leaf nodes
 	 * @param  id           id 
 	 */
-	public TreeNode(TreeNode left, TreeNode right, double correlation, Object id) {
+	public TreeNode(TreeNode left, TreeNode right, double height, Object id) {
 		this.left = left;
 		this.right = right;
-		this.correlation = correlation;
+		this.height = height;
 		this.id = id;
-		this.height = 1;
 	}
 
 

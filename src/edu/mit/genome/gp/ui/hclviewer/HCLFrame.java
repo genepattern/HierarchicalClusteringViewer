@@ -150,7 +150,7 @@ public class HCLFrame extends JFrame {
 			inputSizeMenuItem.addActionListener(
 				new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-						SetElementSizeDialog dialog = new SetElementSizeDialog(HCLFrame.this, hcl.getIntXPixPerUnit(), hcl.getIntYPixPerUnit());
+						SetElementSizeDialog dialog = new SetElementSizeDialog(HCLFrame.this, hcl.getXPixPerUnitAsInt(), hcl.getYPixPerUnitAsInt());
 						if(dialog.showInputDialog()) {
 							hcl.setXPixPerUnit(dialog.getElementWidth());
 							hcl.setYPixPerUnit(dialog.getElementHeight());
@@ -177,7 +177,7 @@ public class HCLFrame extends JFrame {
 		}
 
 		private void createColorSchemeMenu() {
-			JMenu colorSchemeMenu = new JMenu("Color Scheme");
+			JMenu colorSchemeMenu = new JMenu("Normalization");
 			ButtonGroup colorSchemeGroup = new ButtonGroup();
 
 			JRadioButtonMenuItem relativeMenuItem = new JRadioButtonMenuItem("Row", true);
@@ -194,7 +194,7 @@ public class HCLFrame extends JFrame {
 
 			colorSchemeMenu.add(relativeMenuItem);
 
-			JRadioButtonMenuItem absoluteMenuItem = new JRadioButtonMenuItem("Global", false);
+			JRadioButtonMenuItem absoluteMenuItem = new JRadioButtonMenuItem("None", false);
 			colorSchemeGroup.add(absoluteMenuItem);
 			absoluteMenuItem.addActionListener(
 				new ActionListener() {
@@ -214,7 +214,9 @@ public class HCLFrame extends JFrame {
 			customAbsColorMenuItem.addActionListener(
 				new ActionListener() {
 					public void actionPerformed(ActionEvent e) {
-						AbsoluteColorConverter conv = (AbsoluteColorConverter) hcl.getColorConverter();
+						AbsoluteColorConverter conv = (AbsoluteColorConverter) hcl.colorConverter;
+						
+						
 						AbsoluteColorSchemeSelectionDialog dialog = new AbsoluteColorSchemeSelectionDialog(HCLFrame.this, conv.getMinColor(), conv.getMaxColor(), conv.getNeutralColor());
 						int result = dialog.showModal();
 						if(result == JOptionPane.OK_OPTION) {
