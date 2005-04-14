@@ -1,7 +1,6 @@
 #HierarchicalClusterViewer
 #Thu May 13 14:08:42 EDT 2004
-author=Joshua Gould
-className=edu.mit.wi.omnigene.service.analysis.genepattern.GenePatternAnalysisTask
+author=Joshua Gould, Broad Institute
 commandLine=<java> <java_flags> -cp <libdir>gp-common.jar<path.separator><libdir>hclviewer.jar<path.separator><libdir>jargs.jar<path.separator><libdir>colt.jar<path.separator><libdir>trove.jar<path.separator><libdir>file_support.jar<path.separator><libdir>jai_codec.jar<path.separator><libdir>jai_core.jar edu.mit.genome.gp.ui.hclviewer.CdtParser <cdt.filename> <gtr.filename> <atr.filename>
 cpuType=any
 description=Hierarchical clustering viewer that reads in Eisen's cdt, atr, and gtr files. A detailed description of these formats is available from http\://microarray.ccgb.umn.edu/smd/html/MicroArray/help/formats.shtml
@@ -19,6 +18,7 @@ p1_prefix_when_specified=
 p1_TYPE=FILE
 p1_type=java.io.File
 p1_value=
+p1_fileFormat=cdt
 p2_default_value=
 p2_description=Gene Tree file, records the order in which genes (rows) were joined.
 p2_MODE=IN
@@ -28,6 +28,7 @@ p2_prefix_when_specified=
 p2_TYPE=FILE
 p2_type=java.io.File
 p2_value=
+p2_fileFormat=gtr
 p3_default_value=
 p3_description=Array Tree file, records the order in which samples (columns) were joined
 p3_MODE=IN
@@ -37,10 +38,11 @@ p3_prefix_when_specified=
 p3_TYPE=FILE
 p3_type=java.io.File
 p3_value=
+p3_fileFormat=atr
 pipelineModel=
 privacy=public
 quality=production
 serializedModel=
 taskType=Visualizer
-userid=GenePattern
+userid=GenePattern (gp-help@broad.mit.edu)
 version=Adds ability to save dendrograms as part of saved image
