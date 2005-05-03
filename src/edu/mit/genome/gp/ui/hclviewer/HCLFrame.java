@@ -63,7 +63,7 @@ public class HCLFrame extends JFrame {
 						try {
 							bufferedImage = hcl.snapshot();
 						} catch(OutOfMemoryError o) {
-							JOptionPane.showMessageDialog(HCLFrame.this, "Not enough memory available to create image.", "Error", JOptionPane.ERROR_MESSAGE);
+							JOptionPane.showMessageDialog(HCLFrame.this, "There is not enough memory available to save the image. Please use a smaller pixel size and try again.", "Error", JOptionPane.ERROR_MESSAGE);
 							return;
 						}
 
