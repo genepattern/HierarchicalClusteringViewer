@@ -56,8 +56,7 @@ public class CdtParser {
 		try {
 			cdtParser.parse(cdtFileName, atrFileName, gtrFileName);
 		} catch(Exception e) {
-			System.err.println("Parsing of cdt file failed.");
-			e.printStackTrace();
+			JOptionPane.showMessageDialog(null, "Parsing of cdt file failed.");
 			System.exit(0);
 		}
 
@@ -67,7 +66,7 @@ public class CdtParser {
 				geneTree = new Dendrogram(cdtParser.geneTreeRoot, SwingConstants.HORIZONTAL);
 				geneTree.setLeafNodeSpacing(0, 4);
 			} catch(Exception e) {
-				System.err.println("Parsing of gtr file failed.");
+				JOptionPane.showMessageDialog(null, "Parsing of gtr file failed.");
 				System.exit(0);
 			}
 		}
@@ -78,7 +77,7 @@ public class CdtParser {
 				sampleTree = new Dendrogram(cdtParser.arrayTreeRoot, SwingConstants.VERTICAL);
 				sampleTree.setLeafNodeSpacing(0, 4);
 			} catch(Exception e) {
-				System.err.println("Parsing of atr file failed.");
+				JOptionPane.showMessageDialog(null, "Parsing of atr file failed.");
 				System.exit(0);
 			}
 		}
