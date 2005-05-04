@@ -33,6 +33,14 @@ public class CdtParser {
 		String atrFileName = null;
 		String gtrFileName = null;
 		
+      if(args.length==0) {
+         JOptionPane.showMessageDialog(null, "No input files specified.");  
+         System.exit(0);
+      }
+      if(args.length==1) {
+         JOptionPane.showMessageDialog(null, "Must specify a cdt file and either a gtr or atr file or both a gtr and atr file.");  
+         System.exit(0);
+      }
 		if(args.length==2) {
 			String s = args[1];	
 			if(s.toLowerCase().endsWith(".atr")) {
