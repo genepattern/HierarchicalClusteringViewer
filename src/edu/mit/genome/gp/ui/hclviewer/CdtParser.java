@@ -29,7 +29,7 @@ public class CdtParser {
 
 	
 	public static void main(String[] args) {
-		String cdtFileName = args[0];
+		
 		String atrFileName = null;
 		String gtrFileName = null;
 		
@@ -41,6 +41,7 @@ public class CdtParser {
          JOptionPane.showMessageDialog(null, "Must specify a cdt file and either a gtr or atr file or both a gtr and atr file.");  
          System.exit(0);
       }
+      String cdtFileName = args[0];
 		if(args.length==2) {
 			String s = args[1];	
 			if(s.toLowerCase().endsWith(".atr")) {
