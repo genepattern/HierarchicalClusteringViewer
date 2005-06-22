@@ -5,7 +5,8 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
 
-import edu.mit.genome.dataobj.jg.*;
+import org.genepattern.data.matrix.*;
+import gnu.trove.*;
 
 /**
  *  see http://microarray.ccgb.umn.edu/smd/html/MicroArray/help/formats.shtml
@@ -20,7 +21,7 @@ public class CdtParser {
 	/**  max value in cdt file */
 	float maxValue = Integer.MIN_VALUE;
 	/**  matrix of values in cdt file */
-	Dataset matrix;
+	DoubleMatrix2D matrix;
 	TreeNode geneTreeRoot;
 	TreeNode arrayTreeRoot;
 	private Map availableColumnNodes = new HashMap();
@@ -65,6 +66,7 @@ public class CdtParser {
 		try {
 			cdtParser.parse(cdtFileName, atrFileName, gtrFileName);
 		} catch(Exception e) {
+         e.printStackTrace();
 			JOptionPane.showMessageDialog(null, "Parsing of cdt file failed.");
 			System.exit(0);
 		}
@@ -135,22 +137,7 @@ public class CdtParser {
 	public void parse(String file, String atrFileName, String gtrFileName) throws IOException {
 
 		BufferedReader br = new BufferedReader(new FileReader(file));
-		
-		// Remove Comment Lines
-
-/*    for (i=DataFileList->Count-1;i>=0;i--) //FIXME
-    {
-        if (DataFileList->Strings[i].SubString(1,6) == "REMARK")
-        {
-            DataFileList->Delete(i);
-        }
-        if (DataFileList->Strings[i].Length() < 3)
-        {
-            DataFileList->Delete(i);
-        }
-    }*/
-	 
-		int Columns = 0;
+	   int Columns = 0;
 		// Parse First Line
 		java.util.List names = new ArrayList();
 		java.util.List rowNames = new ArrayList();
@@ -190,7 +177,7 @@ public class CdtParser {
 		}
 		
 	 
-		matrix =  DatasetFactory.createDataset(1, headers.length / 2);
+		
 
 		for(int i = 0; i < headers.length; i++) {
 			if(IsData[i]) {
@@ -205,6 +192,10 @@ public class CdtParser {
 		boolean LoadArrayTree = false;
 		String ArrayWeightString = null;
 		String ArrayHeaderString = null;
+      TDoubleArrayList[] columnList = new TDoubleArrayList[Columns];
+      for(int i = 0; i < Columns; i++) {
+         columnList[i] = new TDoubleArrayList();
+      }
 		while((line = br.readLine()) != null) {
 			String[] tokens = split(line);// toArray(line);
 	
@@ -261,9 +252,11 @@ public class CdtParser {
 							float Val = Float.parseFloat(tokens[j]);
 							minValue = Val < minValue ? Val : minValue;
 							maxValue = Val > maxValue ? Val : maxValue;
-							matrix.set(Rows, columnIndex, Val);
+                     columnList[columnIndex].add(Val);
+							//matrix.set(Rows, columnIndex, Val);
 						} catch(NumberFormatException nfe) {
-							matrix.set(Rows, columnIndex, Float.NaN);// missing value
+                     columnList[columnIndex].add(Float.NaN);
+							//matrix.set(Rows, columnIndex, Float.NaN);// missing value
 						}
 						
 						columnIndex++;
@@ -274,8 +267,8 @@ public class CdtParser {
 				    Handle case where there are too few columns of data
 				  */
 				for(int j = columnIndex; j < Columns; j++) {
-					matrix.set(Rows, j, Float.NaN);
-					// GeneTreeNode->Data->Mask[j] = false;
+					//matrix.set(Rows, j, Float.NaN);
+               columnList[columnIndex].add(Float.NaN);
 				}
 
 				Rows++;
@@ -287,8 +280,8 @@ public class CdtParser {
 			StringTokenizer st = new StringTokenizer(ArrayHeaderString);
 			st.nextToken(); // skip 'AID'
 			
-			for(int i = 0, size = matrix.getColumnDimension(); i < size; i++) {
-				String name = matrix.getName(i);
+			for(int i = 0; i < Columns; i++) {
+				String name = (String) names.get(i);
 				TreeNode node = new TreeNode(null, null, 1, name);
 				node.position = i;
 				String aid = st.nextToken();
@@ -296,10 +289,20 @@ public class CdtParser {
 			}
 		}
 		  
-		
-		matrix.setNames(names);
-		matrix.setRowNames(rowNames);
-		matrix.setRowDescriptions(rowDescriptions);
+		matrix =  new DoubleMatrix2D(Rows, Columns);
+      for(int i = 0; i < Rows; i++) {
+         for(int j = 0; j < Columns; j++) {
+            matrix.set(i, j, columnList[j].get(i));
+         }
+      }
+      for(int i = 0; i < names.size(); i++) {
+         matrix.setColumnName(i, (String) names.get(i));
+      }
+      
+      for(int i = 0; i < rowNames.size(); i++) {
+         matrix.setRowName(i, (String) rowNames.get(i));
+      }
+		//matrix.setRowDescriptions(rowDescriptions);
 	
 		
 		if(gtrFileName!=null) {

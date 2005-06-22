@@ -1,98 +1,54 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- Ant build file -->
 
-<project basedir="." default="package" name="HierarchicalClusterViewer">
+<project basedir="" default="package" name="HierarchicalClusterViewer">
+   <property name="dirOffset" value="../"/>
+   <import file="${dirOffset}/commontargets.xml"/>
 
- <property name="dirOffset" value="../" />
-<import file="${dirOffset}/commontargets.xml" />
-
-    <target name="hcvinit" depends="init">
-        
-        <property  name="appfile" value="hclviewer.jar"/>
-        <property  name="inclds" value="edu/**"/>
-        <property  name="manifest" value="gp.mf"/>
-        <property  name="initials" value="gp"/>
-        <property  name="hcvlibpath"  value="lib/" />
+   <target name="_init" depends="init">
+      <property name="appfile" value="hclviewer.jar"/>
+      <property name="inclds" value="edu/**"/>
+      <patternset id="jar.files" includes="broad-cg.jar, gp-modules.jar, Jama-1.0.1.jar,colt.jar, trove.jar"/>
+      <path id="library.classpath">
+      <fileset dir="${libpath}">
+	      <patternset refid="jar.files"/>
+      </fileset>
+      </path>
+   </target>
 	
-	<path  id="library.classpath">
-	  <fileset dir="${libpath}">
-	     <include name="*.jar"/>
-             <include name="*.zip"/>
-          </fileset>
 
-	  <fileset dir="${hcvlibpath}">
-             <include name="*.jar"/>
-             <include name="*.zip"/>
-          </fileset>
-        </path>
-    </target>
+   <target name="package" depends="_init, clean, compile">
+      <jar basedir="." defaultexcludes="true" excludes="**/*.java, **/*.form, **/.nbattrs" includes="${inclds}" jarfile="${appfile}"></jar>
+   </target>
 
+   <target name="clean">
+      <delete>
+         <fileset dir="." includes="**/*.class"/>
+      </delete>
+   </target>
 
-    <target  name="package" depends="init, clean, compile" >
-        
-        <jar basedir="." 
-		defaultexcludes="true" 
-		excludes="**/*.java, **/*.form, **/.nbattrs" 
-		includes="${inclds}" 
-		jarfile="${appfile}" 
-		manifest="${manifest}">
-        </jar>
-    </target>
+   <target name="compile" depends="_init">
+      <javac debug="true" defaultexcludes="true" deprecation="true" destdir="." includes="${inclds}" optimize="false" proceed="false" srcdir="src">
+         <classpath refid="library.classpath"/>
+      </javac>
+   </target>
 
-    <target name="clean" >
-        <delete>
-            <fileset dir="." includes="**/*.class"/>
-        </delete>
-    </target>
+	
 
-    <target name="compile" depends="hcvinit" >
-        <javac srcdir="src" 
-		classpathref="library.classpath" 
-		debug="true" 
-		defaultexcludes="true" 
-		deprecation="true" 
-		destdir="." 
-		optimize="false" 
-		target="1.3"
-		proceed="false"
-		includes="${inclds}">
-	    <classpath refid="library.classpath"/>
-	</javac>
-    </target>
-    
-   
-    
-    <target name="build" depends="clean,compile"  />
-    
-    <target name="run" depends="hcvinit"  >
-        <java classname="edu.mit.genome.gp.GenePattern" 
-		classpath="./:${library.classpath}" fork="true">
-            <classpath refid="library.classpath"/>
-        </java>
-    </target>
+   <target depends="clean,compile" name="build"/>
 
-    <target name="create-zip" depends="hcvinit, package"  >
+   <target depends="_init, package" name="create-zip">
+      <antcall target="prezip"/>
 
-	<antcall target="prezip"/>
+      <zip destfile="${dest.dir}/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
+         <fileset dir="." includes="version.txt, manifest, ${appfile}"/>
+          <fileset dir="${libpath}">
+            <patternset refid="jar.files"/>
+         </fileset>
 
-	<zip destfile="../build/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
-		<fileset dir="." includes="manifest, ${appfile}, version.txt"/>
-		<fileset dir="${hcvlibpath}"/>
-		<fileset dir="${libpath}">
-			<include name="gp-common.jar"/>
-			<include name="file_support.jar"/>
-			<include name="colt.jar"/>
-			<include name="trove.jar"/>
-		</fileset> 
-            <fileset dir="." includes="*.pdf"/>
-	</zip>
-	<antcall target="postzip"/>
-    </target>
-
+         <fileset dir="." includes="*.pdf"/>
+      </zip>
+      <antcall target="postzip"/>
+   </target>
 
 </project>
-
-
-
-
-
-

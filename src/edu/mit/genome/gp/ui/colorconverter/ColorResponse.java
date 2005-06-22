@@ -9,7 +9,7 @@ package edu.mit.genome.gp.ui.hclviewer.colorconverter;
  * @created    August 14, 2003
  * @version
  */
-public class ColorResponse extends edu.mit.genome.util.AbstractKonstant {
+public class ColorResponse {
 	// fields
 	/**  when displaying the pink o' gram use the linear color response (classic way) */
 	public final static ColorResponse LINEAR =
@@ -18,6 +18,8 @@ public class ColorResponse extends edu.mit.genome.util.AbstractKonstant {
 	public final static ColorResponse LOG =
 			new ColorResponse("Logarithmic color response", 1);
 
+   String name;
+   int value;
 	/**
 	 *  Creates new ColorRelationship
 	 *
@@ -25,7 +27,8 @@ public class ColorResponse extends edu.mit.genome.util.AbstractKonstant {
 	 * @param  value  Description of the Parameter
 	 */
 	private ColorResponse(String name, int value) {
-		super(name, value);
+		this.name = name;
+      this.value = value;
 	}
 }
 

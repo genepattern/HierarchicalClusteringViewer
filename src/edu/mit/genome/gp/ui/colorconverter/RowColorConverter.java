@@ -1,9 +1,9 @@
 package edu.mit.genome.gp.ui.hclviewer.colorconverter;
-import edu.mit.genome.dataobj.jg.*;
 import java.awt.*;
 import java.awt.geom.*;
 import javax.swing.*;
 import java.text.NumberFormat;
+import org.genepattern.data.matrix.*;
 
 
 /**
@@ -33,7 +33,7 @@ public final class RowColorConverter implements ColorConverter {
 			0xd5d5ff, 0xffc0e5, 0xff8989, 0xff7080, 0xff5a5a, 0xef4040, 0xd60c00};
 
 	private ColorConverterHeader header;
-	Dataset matrix;
+	DoubleMatrix2D matrix;
 	/** the last row for which max, min, and mean were computed */
 	int lastRow = -1;
 	static Color missingColor = new Color(128, 128, 128);
@@ -47,7 +47,7 @@ public final class RowColorConverter implements ColorConverter {
 	 * @param  matrix    Description of the Parameter
 	 * @param  response  Description of the Parameter
 	 */
-	public RowColorConverter(int[] colormap, ColorResponse response, Dataset matrix) {
+	public RowColorConverter(int[] colormap, ColorResponse response, DoubleMatrix2D matrix) {
 		Color[] colors = new Color[colormap.length];
 		for(int i = 0; i < colormap.length; ++i) {
 			colors[i] = new Color(colormap[i]);
@@ -62,7 +62,7 @@ public final class RowColorConverter implements ColorConverter {
 	}
 
 
-	public RowColorConverter(ColorResponse response, Dataset matrix) {
+	public RowColorConverter(ColorResponse response, DoubleMatrix2D matrix) {
 		this(defaultColorMap, response, matrix);
 	}
 
@@ -93,7 +93,7 @@ public final class RowColorConverter implements ColorConverter {
 		float theMin;
 		float theMax;
 		float theMean;
-		int num = matrix.getColumnDimension();
+		int num = matrix.getColumnCount();
 		theMin = Float.POSITIVE_INFINITY;
 		theMax = Float.NEGATIVE_INFINITY;
 		theMean = 0;

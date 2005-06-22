@@ -237,8 +237,7 @@ public class ZoomPanel extends JPanel {
 	}
 
 	private double _yToPix(double y) {
-		double pix = (ymax - y) * yPixPerUnit + topGutter;
-		return pix;
+		return (ymax - y) * yPixPerUnit + topGutter;
 	}
 }
 

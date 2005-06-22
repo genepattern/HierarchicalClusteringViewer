@@ -12,7 +12,17 @@ import java.awt.print.*;
 
 import java.io.*;
 import javax.swing.event.*;
-import edu.mit.genome.dataobj.jg.*;
+import org.genepattern.data.expr.*;
+import org.genepattern.data.matrix.*;
+
+import org.genepattern.io.OdfWriter;
+import org.genepattern.io.expr.*;
+
+import org.genepattern.module.AnalysisUtil;
+
+import org.genepattern.prediction.*;
+
+import org.genepattern.stats.*;
 /**
  *  Issues: -when at bottom of scroll pane and zoom out, image is too high,
  *  currently using hack to fix this -Add should just draw matrix, gene names,
@@ -38,7 +48,7 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 	JScrollPane scrollPane;
 	final int INITIAL_X_PIX_PER_UNIT = 8;
 	final int INITIAL_Y_PIX_PER_UNIT = 8;
-	Dataset matrix;
+	DoubleMatrix2D matrix;
 
 	JPanel headerPanel = new JPanel();
 	// contains sample names and legend if it exists
@@ -69,15 +79,15 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 	AlphaComposite SRC_OVER_COMPOSITE = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, 0.5f);
 
 
-	public HCL(Dataset matrix, double minValue, double maxValue, Dendrogram sampleTree, Dendrogram geneTree) {
+	public HCL(DoubleMatrix2D matrix, double minValue, double maxValue, Dendrogram sampleTree, Dendrogram geneTree) {
 		this.matrix = matrix;
 		geneNamesDrawer = new GeneNames();
 		sampleNamesDrawer = new SampleNames();
 		this.minValue = minValue;
 		this.maxValue = maxValue;
 
-		nx = matrix.getColumnDimension();
-		ny = matrix.getRowDimension();
+		nx = matrix.getColumnCount();
+		ny = matrix.getRowCount();
 		this.sampleTree = sampleTree;
 		this.geneTree = geneTree;
 		if(sampleTree != null) {
@@ -90,7 +100,7 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 		toolTipManager.registerComponent(this);
 
 		setBackground(Color.white);
-		setMinMax(0, nx - 1, 0, ny);
+		setMinMax(0, nx, 0, ny);
 
 		setPixPerUnit(INITIAL_X_PIX_PER_UNIT, INITIAL_Y_PIX_PER_UNIT);
 
@@ -229,7 +239,7 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 	}
 
 
-	public Dataset getMatrix() {
+	public DoubleMatrix2D getMatrix() {
 		return matrix;
 	}
 
@@ -426,11 +436,11 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 		int y = (int) pixToY(e.getY());
 
 		
-		if(y >= 0 && y < matrix.getRowDimension() && x >= 0 && x < matrix.getColumnDimension()) {
+		if(y >= 0 && y < matrix.getRowCount() && x >= 0 && x < matrix.getColumnCount()) {
 
 			StringBuffer sb = new StringBuffer();
 			String rowId = matrix.getRowName(y);
-			String columnId = matrix.getName(x);
+			String columnId = matrix.getColumnName(x);
 			sb.append(rowId);
 			sb.append(", ");
 			sb.append(columnId);
@@ -883,7 +893,7 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 			FontMetrics fm = g.getFontMetrics();
 			maxWidth = 0;
 			for(int i = 0; i < nx; i++) {
-				String s = matrix.getName(i);
+				String s = matrix.getColumnName(i);
 				if(s != null) {
 					int w = fm.stringWidth(s);
 					maxWidth = Math.max(maxWidth, w);
@@ -916,7 +926,7 @@ public class HCL extends ZoomPanel implements NodeSelectionListener {
 			float x = (float) (getXPixPerUnitAsInt() / 2) + gutter;
 
 			for(int i = 0; i < nx; i++) {
-				String s = matrix.getName(i);
+				String s = matrix.getColumnName(i);
 				if(s != null) {
 					g2.drawString(s, y, descent + x);
 					x += (float) getXPixPerUnitAsInt();

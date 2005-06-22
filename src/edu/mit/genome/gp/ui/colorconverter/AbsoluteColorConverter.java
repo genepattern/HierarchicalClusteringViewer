@@ -2,19 +2,18 @@ package edu.mit.genome.gp.ui.hclviewer.colorconverter;
 import java.awt.image.BufferedImage;
 import java.awt.*;
 import javax.swing.*;
-
-import edu.mit.genome.dataobj.jg.*;
+import org.genepattern.data.matrix.*;
 
 public class AbsoluteColorConverter implements ColorConverter {
 	static Color missingColor = new Color(128, 128, 128);
 	BufferedImage maxColorImage = createGradientImage(Color.black, Color.red);
 	BufferedImage minColorImage = createGradientImage(Color.green, Color.black);
-	Dataset matrix;
+	DoubleMatrix2D matrix;
 	ColorConverterHeader header;
 	float min, max;
 	Color maxColor, minColor, neutralColor;
 
-	public AbsoluteColorConverter(Color minColor, Color maxColor, Color neutralColor, Dataset matrix, float min, float max) {
+	public AbsoluteColorConverter(Color minColor, Color maxColor, Color neutralColor, DoubleMatrix2D matrix, float min, float max) {
 		this.matrix = matrix;
 		maxColorImage = createGradientImage(neutralColor, maxColor);
 		minColorImage = createGradientImage(minColor, neutralColor);
