@@ -1,5 +1,0 @@
-Manifest-Version: 1.0
-Created-By: NetBeans IDE
-Main-Class: edu.mit.genome.gp.executers.RunExcludeRowsPreprocess
-Class-Path: ./lib/gp-common.jar ./lib/common_cmdline.jar ./lib/file_support.jar ./lib/trove.jar ./lib/jaxb-rt-1.0-ea.jar
-
