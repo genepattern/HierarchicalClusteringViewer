@@ -1,54 +1,24 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Ant build file -->
 
-<project basedir="" default="package" name="HierarchicalClusterViewer">
-   <property name="dirOffset" value="../"/>
-   <import file="${dirOffset}/commontargets.xml"/>
+<project basedir="" default="package" name="HierarchicalClusteringViewer">
+	<property name="dirOffset" value="../"/>
+	<import file="${dirOffset}/commontargets.xml"/>
 
-   <target name="_init" depends="init">
-      <property name="appfile" value="hclviewer.jar"/>
-      <property name="inclds" value="edu/**"/>
-      <patternset id="jar.files" includes="broad-cg.jar, gp-modules.jar, Jama-1.0.1.jar,colt.jar, trove.jar"/>
-      <path id="library.classpath">
-      <fileset dir="${libpath}">
-	      <patternset refid="jar.files"/>
-      </fileset>
-      </path>
-   </target>
+	<target depends="init" name="create-zip">
+		<antcall target="prezip"/>
 	
-
-   <target name="package" depends="_init, clean, compile">
-      <jar basedir="." defaultexcludes="true" excludes="**/*.java, **/*.form, **/.nbattrs" includes="${inclds}" jarfile="${appfile}"></jar>
-   </target>
-
-   <target name="clean">
-      <delete>
-         <fileset dir="." includes="**/*.class"/>
-      </delete>
-   </target>
-
-   <target name="compile" depends="_init">
-      <javac debug="true" defaultexcludes="true" deprecation="true" destdir="." includes="${inclds}" optimize="false" proceed="false" srcdir="src">
-         <classpath refid="library.classpath"/>
-      </javac>
-   </target>
-
-	
-
-   <target depends="clean,compile" name="build"/>
-
-   <target depends="_init, package" name="create-zip">
-      <antcall target="prezip"/>
-
-      <zip destfile="${dest.dir}/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
-         <fileset dir="." includes="version.txt, manifest, ${appfile}"/>
-          <fileset dir="${libpath}">
-            <patternset refid="jar.files"/>
-         </fileset>
-
-         <fileset dir="." includes="*.pdf"/>
-      </zip>
-      <antcall target="postzip"/>
-   </target>
+		<path id="library.classpath">
+			<fileset id="jar.lib" dir="${libpath}" includes="broad-cg.jar, gp-modules.jar, Jama-1.0.1.jar, trove.jar, forms-1.0.5.jar, jfreechart-1.0.0.jar, jcommon-1.0.0.jar, axis.jar, jaxrpc.jar, 
+		commons-discovery.jar, commons-logging.jar, saaj.jar, GeneCruiser.jar, jai_codec.jar, jai_core.jar, my-xtools.jar, jxl.jar, jaxb-rt-1.0-ea.jar, log4j-1.2.13.jar, dom4j-1.6.1.jar">
+			</fileset>
+		</path>
+		
+		<zip destfile="${dest.dir}/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
+			<fileset dir="." includes="manifest, *.pdf"/>
+			<fileset refid="jar.lib" />
+		</zip>
+		<antcall target="postzip"/>
+	</target>
 
 </project>
