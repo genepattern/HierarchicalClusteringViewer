@@ -7,7 +7,7 @@ version=
 author=Joshua Gould, Broad Institute
 commandLine=<java> -Dedu.mit.broad.gc.endpoint\=http\://www.broad.mit.edu/webservices/genecruiser/services/Annotation <java_flags> -cp <libdir>gp-modules.jar<path.separator><libdir>my-xtools.jar org.genepattern.clustering.hierarchical.HCLApp <cdt.filename> -g<gtr.filename> -a<atr.filename> 
 cpuType=any
-description=Hierarchical clustering viewer that reads in Eisen's cdt, atr, and gtr files. A detailed description of these formats is available from http\://microarray.ccgb.umn.edu/smd/html/MicroArray/help/formats.shtml
+description=Hierarchical clustering viewer that reads cdt, atr, and gtr files. 
 JVMLevel=1.4
 language=Java
 name=HierarchicalClusteringViewer
