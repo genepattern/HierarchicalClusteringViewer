@@ -20,4 +20,14 @@
 		<antcall target="postzip"/>
 	</target>
 
+	<target depends="init" name="run">
+		<java classname="org.genepattern.clustering.hierarchical.HCLApp" fork="true">
+			<arg value="/Users/jgould/datasets/all_aml_train.cdt" />
+			<arg value="-g/Users/jgould/datasets/all_aml_train.gtr" />
+			<arg value="-a/Users/jgould/datasets/all_aml_train.atr" />
+			<sysproperty key="edu.mit.broad.gc.endpoint" value="http://wwwdev.broad.mit.edu/webservices/genecruiser/services/Annotation" />
+			<classpath refid="library.classpath" />
+		</java>
+	</target>
+	
 </project>
