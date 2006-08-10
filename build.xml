@@ -2,32 +2,34 @@
 <!-- Ant build file -->
 
 <project basedir="" default="package" name="HierarchicalClusteringViewer">
-	<property name="dirOffset" value="../"/>
-	<import file="${dirOffset}/commontargets.xml"/>
+    <property name="dirOffset" value="../"/>
+    <import file="${dirOffset}/commontargets.xml"/>
 
-	<target depends="init" name="create-zip">
-		<antcall target="prezip"/>
-	
-		<path id="library.classpath">
-			<fileset id="jar.lib" dir="${libpath}" includes="broad-cg.jar, gp-modules.jar, Jama-1.0.1.jar, trove.jar, forms-1.0.5.jar, jfreechart-1.0.0.jar, jcommon-1.0.0.jar, GeneCruiser.jar, axis.jar, jaxrpc.jar, commons-discovery-0.2.jar, commons-logging-1.0.4.jar, saaj.jar, wsdl4j-1.5.1.jar, jai_codec.jar, jai_core.jar, epsgraphics.jar, my-xtools.jar, jxl.jar, jaxb-rt-1.0-ea.jar, log4j-1.2.13.jar, dom4j-1.6.1.jar">
-			</fileset>
-		</path>
-		
-		<zip destfile="${dest.dir}/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
-			<fileset dir="." includes="manifest, *.pdf"/>
-			<fileset refid="jar.lib" />
-		</zip>
-		<antcall target="postzip"/>
-	</target>
+    <target depends="init" name="create-zip">
+        <antcall target="prezip"/>
 
-	<target depends="init" name="run">
-		<java classname="org.genepattern.clustering.hierarchical.HCLApp" fork="true">
-			<arg value="/Users/jgould/datasets/all_aml_train.cdt" />
-			<arg value="-g/Users/jgould/datasets/all_aml_train.gtr" />
-			<arg value="-a/Users/jgould/datasets/all_aml_train.atr" />
-			<sysproperty key="edu.mit.broad.gc.endpoint" value="http://wwwdev.broad.mit.edu/webservices/genecruiser/services/Annotation" />
-			<classpath refid="library.classpath" />
-		</java>
-	</target>
-	
+        <path id="library.classpath">
+            <fileset id="jar.lib" dir="${libpath}"
+                     includes="broad-cg.jar, gp-modules.jar, Jama-1.0.1.jar, trove.jar, forms-1.0.5.jar, jfreechart-1.0.0.jar, jcommon-1.0.0.jar, GeneCruiser.jar, axis.jar, jaxrpc.jar, commons-discovery-0.2.jar, commons-logging-1.0.4.jar, saaj.jar, wsdl4j-1.5.1.jar, jai_codec.jar, jai_core.jar, epsgraphics.jar, my-xtools.jar, jxl.jar, jaxb-rt-1.0-ea.jar, log4j-1.2.13.jar, dom4j-1.6.1.jar">
+            </fileset>
+        </path>
+
+        <zip destfile="${dest.dir}/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
+            <fileset dir="." includes="manifest, *.pdf"/>
+            <fileset refid="jar.lib"/>
+        </zip>
+        <antcall target="postzip"/>
+    </target>
+
+    <target depends="init" name="run">
+        <java classname="org.genepattern.clustering.hierarchical.HCLApp" fork="true" maxmemory="512m">
+            <arg value="/Users/jgould/datasets/all_aml_train.cdt"/>
+            <arg value="-g/Users/jgould/datasets/all_aml_train.gtr"/>
+            <arg value="-a/Users/jgould/datasets/all_aml_train.atr"/>
+            <sysproperty key="edu.mit.broad.gc.endpoint"
+                         value="http://www.broad.mit.edu/webservices/genecruiser/services/Annotation"/>
+            <classpath refid="library.classpath"/>
+        </java>
+    </target>
+
 </project>
