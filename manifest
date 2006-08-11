@@ -1,9 +1,8 @@
 privacy=public
-publicationDate=07/07/2005 17\:38 
 quality=production
 taskType=Visualizer
 userid=GenePattern (gp-help@broad.mit.edu)
-version=
+version=Added ability to set dendrogram line thickness. Fixed bug in background color in saved images.
 author=Joshua Gould, Broad Institute
 commandLine=<java> -Dedu.mit.broad.gc.endpoint\=http\://www.broad.mit.edu/webservices/genecruiser/services/Annotation <java_flags> -cp <libdir>gp-modules.jar<path.separator><libdir>my-xtools.jar org.genepattern.clustering.hierarchical.HCLApp <cdt.filename> -g<gtr.filename> -a<atr.filename> 
 cpuType=any
