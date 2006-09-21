@@ -23,9 +23,9 @@
 
     <target depends="init" name="run">
         <java classname="org.genepattern.clustering.hierarchical.HCLApp" fork="true" maxmemory="512m">
-            <arg value="/Users/jgould/datasets/all_aml_train.cdt"/>
-            <arg value="-g/Users/jgould/datasets/all_aml_train.gtr"/>
-            <arg value="-a/Users/jgould/datasets/all_aml_train.atr"/>
+            <arg value="/Users/jgould/datasets/hcl/all_aml_train.neighbors.cdt"/>
+            <arg value="-g/Users/jgould/datasets/hcl/all_aml_train.neighbors.gtr"/>
+            <arg value="-a/Users/jgould/datasets/hcl/all_aml_train.neighbors.atr"/>
             <sysproperty key="edu.mit.broad.gc.endpoint"
                          value="http://www.broad.mit.edu/webservices/genecruiser/services/Annotation"/>
             <classpath refid="library.classpath"/>
