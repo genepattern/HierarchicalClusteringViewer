@@ -10,7 +10,7 @@
 
         <path id="library.classpath">
             <fileset id="jar.lib" dir="${libpath}"
-                     includes="broad-cg.jar, gp-modules.jar, Jama-1.0.1.jar, trove.jar, forms-1.0.5.jar, jfreechart-1.0.0.jar, jcommon-1.0.0.jar, GeneCruiser.jar, axis.jar, jaxrpc.jar, commons-discovery-0.2.jar, commons-logging-1.0.4.jar, saaj.jar, wsdl4j-1.5.1.jar, jai_codec.jar, jai_core.jar, epsgraphics.jar, my-xtools.jar, jxl.jar, jaxb-rt-1.0-ea.jar, log4j-1.2.13.jar, dom4j-1.6.1.jar">
+                     includes="gp-modules.jar, Jama-1.0.1.jar, trove.jar, forms-1.0.5.jar, jfreechart-1.0.0.jar, jcommon-1.0.0.jar, GeneCruiser.jar, axis.jar, jaxrpc.jar, commons-discovery-0.2.jar, commons-logging-1.0.4.jar, saaj.jar, wsdl4j-1.5.1.jar, jai_codec.jar, jai_core.jar, epsgraphics.jar, my-xtools.jar, jxl.jar, jaxb-rt-1.0-ea.jar, log4j-1.2.13.jar, dom4j-1.6.1.jar">
             </fileset>
         </path>
 
