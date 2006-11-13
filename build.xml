@@ -1,35 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- Ant build file -->
 
-<project basedir="" default="package" name="HierarchicalClusteringViewer">
-    <property name="dirOffset" value="../"/>
-    <import file="${dirOffset}/commontargets.xml"/>
+<project basedir="" default="create-zip" name="HierarchicalClusteringViewer">
+	<property name="dirOffset" value="../" />
+	<import file="${dirOffset}/commontargets.xml" />
 
-    <target depends="init" name="create-zip">
-        <antcall target="prezip"/>
+	<target depends="init" name="create-zip">
+		<antcall target="prezip" />
 
-        <path id="library.classpath">
-            <fileset id="jar.lib" dir="${libpath}"
-                     includes="gp-modules.jar, Jama-1.0.1.jar, trove.jar, forms-1.0.5.jar, jfreechart-1.0.0.jar, jcommon-1.0.0.jar, GeneCruiser.jar, axis.jar, jaxrpc.jar, commons-discovery-0.2.jar, commons-logging-1.0.4.jar, saaj.jar, wsdl4j-1.5.1.jar, jai_codec.jar, jai_core.jar, epsgraphics.jar, my-xtools.jar, jxl.jar, jaxb-rt-1.0-ea.jar, log4j-1.2.13.jar, dom4j-1.6.1.jar">
-            </fileset>
-        </path>
+		<path id="library.classpath">
+			<fileset dir="${libpath}" id="base.path" includes="jfreechart-1.0.0.jar jcommon-1.0.0.jar
+	trove.jar Jama-1.0.1.jar jai_codec.jar jai_core.jar freehep-base.jar 
+freehep-graphics2d.jar freehep-graphicsio.jar freehep-graphicsio-ps.jar
+ forms-1.0.5.jar foxtrot.jar colt.jar 
+ opencsv-1.6.jar GeneCruiser.jar tar.jar my-xtools.jar gp-modules.jar" />
+		</path>
 
-        <zip destfile="${dest.dir}/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
-            <fileset dir="." includes="manifest, *.pdf"/>
-            <fileset refid="jar.lib"/>
-        </zip>
-        <antcall target="postzip"/>
-    </target>
-
-    <target depends="init" name="run">
-        <java classname="org.genepattern.clustering.hierarchical.HCLApp" fork="true" maxmemory="512m">
-            <arg value="test-data/all_aml_train.neighbors.cdt"/>
-            <arg value="-gtest-data/all_aml_train.neighbors.gtr"/>
-            <arg value="-atest-data/all_aml_train.neighbors.atr"/>
-            <sysproperty key="edu.mit.broad.gc.endpoint"
-                         value="http://www.broad.mit.edu/webservices/genecruiser/services/Annotation"/>
-            <classpath refid="library.classpath"/>
-        </java>
-    </target>
+		<zip destfile="${dest.dir}/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
+			<fileset dir="." includes="manifest, *.pdf" />
+			<fileset refid="base.path" />
+		</zip>
+		<antcall target="postzip" />
+	</target>
 
 </project>
