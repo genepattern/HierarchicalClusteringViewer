@@ -22,5 +22,11 @@ freehep-graphics2d.jar freehep-graphicsio.jar freehep-graphicsio-ps.jar
 		</zip>
 		<antcall target="postzip" />
 	</target>
+	
+	<target depends="init" name="run">
+		<java classname="org.genepattern.test.HCLAppTest" fork="true">
+			<classpath refid="library.classpath" />
+		</java>
+	</target>
 
 </project>
