@@ -11,7 +11,7 @@
 		<path id="library.classpath">
 			<fileset dir="${libpath}" id="base.path" includes="jfreechart-1.0.3.jar jcommon-1.0.6.jar trove.jar Jama-1.0.1.jar
 				jai_codec.jar jai_core.jar freehep-base.jar freehep-graphics2d.jar freehep-graphicsio.jar freehep-graphicsio-ps.jar
-				forms-1.0.5.jar colt.jar opencsv-1.6.jar GeneCruiser.jar tar.jar gp-modules.jar" />
+				forms-1.0.7.jar colt.jar opencsv-1.6.jar GeneCruiser.jar tar.jar gp-modules.jar" />
 		</path>
 
 		<zip destfile="${dest.dir}/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
