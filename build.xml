@@ -22,8 +22,11 @@
 	</target>
 
 	<target depends="init" name="run">
-		<java classname="org.genepattern.test.HCLAppTest" fork="true">
+		<java maxmemory="1024m" classname="org.genepattern.clustering.hierarchical.HCLApp" fork="true">
 			<classpath refid="library.classpath" />
+			<arg value="/Users/jgould/datasets/hcl/all_aml_train-preprocessed.cdt" />
+			<arg value="-a/Users/jgould/datasets/hcl/all_aml_train-preprocessed.atr" />
+			<arg value="-g/Users/jgould/datasets/hcl/all_aml_train-preprocessed.gtr" />
 		</java>
 	</target>
 
