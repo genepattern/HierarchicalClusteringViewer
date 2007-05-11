@@ -39,7 +39,7 @@ cpuType=any
 p1_TYPE=FILE
 p3_name=atr.filename
 p2_optional=on
-version=Plot selected samples only in profile plot
+version=Additional additional plots, keyboard shortcuts, and ability to label samples from sample info file.
 p3_description=Array Tree file, records the order in which samples (columns) were joined (at least one of gtr filename and atr filename is required)
 p3_TYPE=FILE
 commandLine=<java> -Dedu.mit.broad.gc.endpoint\=http\://www.broad.mit.edu/webservices/genecruiser/services/Annotation <java_flags> -cp <libdir>gp-modules.jar org.genepattern.clustering.hierarchical.HCLApp <cdt.filename> -g<gtr.filename> -a<atr.filename> 
