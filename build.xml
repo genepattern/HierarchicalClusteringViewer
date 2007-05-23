@@ -9,14 +9,16 @@
 		<antcall target="prezip" />
 
 		<path id="library.classpath">
-			<fileset dir="${libpath}" id="base.path" includes="jfreechart-* jcommon-* trove.jar Jama-1.0.1.jar
-				jai_codec.jar jai_core.jar freehep-base.jar freehep-graphics2d.jar freehep-graphicsio.jar freehep-graphicsio-ps.jar
-				forms-1.0.7.jar colt.jar opencsv-1.7.jar GeneCruiser.jar tar.jar gp-modules.jar" />
+			<fileset refid="genecruiser.jars" />
+			<fileset refid="image.jars" />
+			<fileset dir="${libpath}" id="jars.to.include" includes="jfreechart-* jcommon-* trove.jar Jama-1.0.1.jar forms-* colt.jar opencsv-1.7.jar gp-modules.jar" />
 		</path>
 
 		<zip destfile="${dest.dir}/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
 			<fileset dir="." includes="manifest, *.pdf" />
-			<fileset refid="base.path" />
+			<fileset refid="jars.to.include" />
+			<fileset refid="genecruiser.jars" />
+			<fileset refid="image.jars" />
 		</zip>
 		<antcall target="postzip" />
 	</target>
