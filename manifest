@@ -1,15 +1,15 @@
 #Mon Nov 13 12:40:56 EST 2006
 author=Joshua Gould, Broad Institute
-commandLine=<java> -Dedu.mit.broad.gc.endpoint\=http\://www.broad.mit.edu/webservices/genecruiser/services/Annotation <java_flags> -cp <libdir>gp-modules.jar org.genepattern.clustering.hierarchical.HCLApp <cdt.file> -g<gtr.file> -a<atr.file> 
+commandLine=<java> <java_flags> -cp <libdir>gp-modules.jar org.genepattern.clustering.hierarchical.HCLApp <cdt.file> -g<gtr.file> -a<atr.file>
 cpuType=any
-description=Views results of hierarchical clustering. 
+description=Views results of hierarchical clustering.
 JVMLevel=1.5
 language=Java
 LSID=urn\:lsid\:broad.mit.edu\:cancer.software.genepattern.module.visualizer\:00031\:999999999
 name=HierarchicalClusteringViewer
 os=any
 privacy=public
-publicationDate=11/13/2006 12\:40 
+publicationDate=11/13/2006 12\:40
 quality=production
 taskType=Visualizer
 userid=GenePattern (gp-help@broad.mit.edu)
