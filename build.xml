@@ -3,6 +3,9 @@
 
 <project basedir="" default="create-zip" name="HierarchicalClusteringViewer">
 	<property name="dirOffset" value="../" />
+	<property name="UNOPTIMIZED_JAR" value="hcl.jar" />
+	<property name="OPTIMIZED_JAR" value="hcl-o.jar" />
+	
 	<import file="${dirOffset}/commontargets.xml" />
 
 	<target depends="init" name="create-zip">
@@ -16,13 +19,33 @@
 
 		<zip destfile="${dest.dir}/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
 			<fileset dir="." includes="manifest, *.pdf" />
-			<fileset refid="jars.to.include" />
-			<fileset refid="genecruiser.jars" />
-			<fileset refid="image.jars" />
+			<fileset dir=".." includes="OPTIMIZED_JAR" />
 		</zip>
 		<antcall target="postzip" />
 	</target>
 
+	<target name="package" depends="init" description="Builds unoptimzed jar file">
+		<delete file="${UNOPTIMIZED_JAR}" />
+		<jar destfile="${UNOPTIMIZED_JAR}">
+			<zipgroupfileset refid="genecruiser.jars" />
+			<zipgroupfileset refid="image.jars" />
+			<zipgroupfileset refid="jars.to.include" />
+			<manifest>
+				<attribute name="Main-Class" value="org.genepattern.clustering.hierarchical.HCLApp" />
+			</manifest>
+		</jar>
+	</target>
+	
+	<target name="package-o" depends="package" description="Builds shrunk jar file">
+		<delete file="../${OPTIMIZED_JAR}" />
+		<java maxmemory="1024m" classname="jshrink.Jshrink" fork="true">
+			<arg line="${UNOPTIMIZED_JAR} -o ../${OPTIMIZED_JAR} -license '12/25/2006 Stan Diamond ZEGRNVXBJLIAEIKM' -keepPublic -keepPackage -keepPrivate -keepProtected -noRenameClasses -noRenamePackage -noRenamePath -noRenamePrivate -noRenameProtected -noRenamePublic -keep 'org.apache.axis.?' -keep 'org.genepattern.io.?' -keep 'org.freehep.graphicsio.?' -keep 'javax.media.jai.?' -keep 'javax.media.?' -keep 'com.sun.media.jai.?'" />
+			<classpath>
+				<pathelement location="../lib/jshrink.jar" />
+			</classpath>
+		</java>
+	</target>
+	
 	<target depends="init" name="run">
 		<java maxmemory="1024m" classname="org.genepattern.clustering.hierarchical.HCLApp" fork="true">
 			<classpath refid="library.classpath" />
