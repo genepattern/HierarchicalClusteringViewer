@@ -1,22 +1,17 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<!-- Ant build file -->
-
 <project basedir="" default="create-zip" name="HierarchicalClusteringViewer">
 	<property name="dirOffset" value="../" />
 	<property name="UNOPTIMIZED_JAR" value="hcl.jar" />
 	<property name="OPTIMIZED_JAR" value="hcl-o.jar" />
-	
+
 	<import file="${dirOffset}/commontargets.xml" />
 
-	<target depends="init" name="create-zip">
+	<target name="_init" depends="init">
+		<fileset dir="${libpath}" id="jars.to.include" includes="jfreechart-* jcommon-* trove.jar Jama-1.0.1.jar forms-* colt.jar opencsv-1.7.jar gp-modules.jar" />
+	</target>
+
+	<target depends="_init" name="create-zip">
 		<antcall target="prezip" />
-
-		<path id="library.classpath">
-			<fileset refid="genecruiser.jars" />
-			<fileset refid="image.jars" />
-			<fileset dir="${libpath}" id="jars.to.include" includes="jfreechart-* jcommon-* trove.jar Jama-1.0.1.jar forms-* colt.jar opencsv-1.7.jar gp-modules.jar" />
-		</path>
-
 		<zip destfile="${dest.dir}/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
 			<fileset dir="." includes="manifest, *.pdf" />
 			<fileset dir=".." includes="OPTIMIZED_JAR" />
@@ -24,7 +19,7 @@
 		<antcall target="postzip" />
 	</target>
 
-	<target name="package" depends="init" description="Builds unoptimzed jar file">
+	<target name="package" depends="_init" description="Builds unoptimzed jar file">
 		<delete file="${UNOPTIMIZED_JAR}" />
 		<jar destfile="${UNOPTIMIZED_JAR}">
 			<zipgroupfileset refid="genecruiser.jars" />
@@ -35,7 +30,7 @@
 			</manifest>
 		</jar>
 	</target>
-	
+
 	<target name="package-o" depends="package" description="Builds shrunk jar file">
 		<delete file="../${OPTIMIZED_JAR}" />
 		<java maxmemory="1024m" classname="jshrink.Jshrink" fork="true">
@@ -45,10 +40,22 @@
 			</classpath>
 		</java>
 	</target>
-	
-	<target depends="init" name="run">
+
+	<target depends="_init" name="run">
+		<java maxmemory="1024m" classname="org.genepattern.clustering.hierarchical.HCLApp" fork="true" classpath="../${OPTIMIZED_JAR}">
+			<arg value="test-data/all_aml_train.neighbors.cdt" />
+			<arg value="-atest-data/all_aml_train.neighbors.atr" />
+			<arg value="-gtest-data/all_aml_train.neighbors.gtr" />
+		</java>
+	</target>
+
+	<target depends="_init" name="run2">
 		<java maxmemory="1024m" classname="org.genepattern.clustering.hierarchical.HCLApp" fork="true">
-			<classpath refid="library.classpath" />
+			<classpath>
+				<fileset refid="genecruiser.jars" />
+				<fileset refid="image.jars" />
+				<fileset refid="jars.to.include" />
+			</classpath>
 			<arg value="test-data/all_aml_train.neighbors.cdt" />
 			<arg value="-atest-data/all_aml_train.neighbors.atr" />
 			<arg value="-gtest-data/all_aml_train.neighbors.gtr" />
