@@ -41,4 +41,12 @@
 		</java>
 	</target>
 
+	<target depends="_init" name="run">
+		<java maxmemory="512m" jar="../${OPTIMIZED_JAR}" fork="true">
+			<arg value="test-data/all_aml_train.neighbors.cdt" />
+			<arg value="-gtest-data/all_aml_train.neighbors.gtr" />
+			<arg value="-atest-data/all_aml_train.neighbors.atr" />
+		</java>
+	</target>
+
 </project>
