@@ -41,6 +41,26 @@
 		</java>
 	</target>
 
+	<target name="package-example" depends="_init" description="Builds example jar file">
+		<jar destfile="hcl-example.jar">
+			<zipgroupfileset refid="genecruiser.jars" />
+			<zipgroupfileset refid="image.jars" />
+			<zipgroupfileset refid="jars.to.include" />
+			<fileset dir="test-data" includes="*" />
+			<manifest>
+				<attribute name="Main-Class" value="org.genepattern.clustering.hierarchical.HCLExample" />
+			</manifest>
+		</jar>
+
+		<java maxmemory="1024m" classname="jshrink.Jshrink" fork="true">
+			<arg line="hcl-example.jar -o ../hcl-example.jar -license '12/25/2006 Stan Diamond ZEGRNVXBJLIAEIKM' -keepPublic -keepPackage -keepPrivate -keepProtected -noRenameClasses -noRenamePackage -noRenamePath -noRenamePrivate -noRenameProtected -noRenamePublic -keep 'org.apache.axis.?' -keep 'org.genepattern.io.?' -keep 'org.freehep.graphicsio.?' -keep 'javax.media.jai.?' -keep 'javax.media.?' -keep 'com.sun.media.jai.?'" />
+			<classpath>
+				<pathelement location="../lib/jshrink.jar" />
+			</classpath>
+		</java>
+	</target>
+
+
 	<target depends="_init" name="run">
 		<java maxmemory="512m" jar="../${OPTIMIZED_JAR}" fork="true">
 			<arg value="test-data/all_aml_train.neighbors.cdt" />
