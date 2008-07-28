@@ -1,72 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project basedir="" default="create-zip" name="HierarchicalClusteringViewer">
 	<property name="dirOffset" value="../" />
-	<property name="UNOPTIMIZED_JAR" value="hcl.jar" />
-	<property name="OPTIMIZED_JAR" value="hcl-o.jar" />
 
 	<import file="${dirOffset}/commontargets.xml" />
 
-	<target name="_init" depends="init">
-		<fileset dir="${libpath}" id="jars.to.include" includes="swing-worker-1.1.jar wizard.jar edtftpj-1.5.2.jar commons-math-1.1.jar algorithms.jar algorithms-impl.jar junit.jar venn.jar gsea-for-gp.jar jide-common.jar jide-grids.jar jide-components.jar jide-dock.jar jfreechart-* jcommon-* trove.jar Jama-1.0.1.jar forms-* colt.jar opencsv-1.7.jar gp-modules.jar foxtrot.jar" />
-	</target>
-
-	<target depends="package-o" name="create-zip">
+	<target name="create-zip" depends="init">
+		<ant antfile="../HeatMapViewer/build.xml" target="package-o" />
 		<antcall target="prezip" />
 		<zip destfile="${dest.dir}/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
 			<fileset dir="." includes="manifest, *.pdf" />
-			<fileset dir=".." includes="${OPTIMIZED_JAR}" />
+			<fileset dir=".." includes="../heatmap-o.jar" />
+			<fileset refid="gp.client.jars" />
 		</zip>
 		<antcall target="postzip" />
-	</target>
-
-	<target name="package" depends="_init" description="Builds unoptimzed jar file">
-		<delete file="${UNOPTIMIZED_JAR}" />
-		<jar destfile="${UNOPTIMIZED_JAR}">
-			<zipgroupfileset refid="genecruiser.jars" />
-			<zipgroupfileset refid="image.jars" />
-			<zipgroupfileset refid="jars.to.include" />
-			<manifest>
-				<attribute name="Main-Class" value="org.genepattern.clustering.hierarchical.HCLApp" />
-			</manifest>
-		</jar>
-	</target>
-
-	<target name="package-o" depends="package" description="Builds shrunk jar file">
-		<delete file="../${OPTIMIZED_JAR}" />
-		<java maxmemory="1024m" classname="jshrink.Jshrink" fork="true">
-			<arg line="${UNOPTIMIZED_JAR} -o ../${OPTIMIZED_JAR} -license '12/25/2006 Stan Diamond ZEGRNVXBJLIAEIKM' -keepPublic -keepPackage -keepPrivate -keepProtected -noRenameClasses -noRenamePackage -noRenamePath -noRenamePrivate -noRenameProtected -noRenamePublic -keep 'org.apache.axis.?' -keep 'org.genepattern.io.?' -keep 'org.freehep.graphicsio.?' -keep 'javax.media.jai.?' -keep 'javax.media.?' -keep 'com.sun.media.jai.?'" />
-			<classpath>
-				<pathelement location="../lib/jshrink.jar" />
-			</classpath>
-		</java>
-	</target>
-
-	<target name="package-example" depends="_init" description="Builds example jar file">
-		<jar destfile="hcl-example.jar">
-			<zipgroupfileset refid="genecruiser.jars" />
-			<zipgroupfileset refid="image.jars" />
-			<zipgroupfileset refid="jars.to.include" />
-			<fileset dir="test-data" includes="*" />
-			<manifest>
-				<attribute name="Main-Class" value="org.genepattern.clustering.hierarchical.HCLExample" />
-			</manifest>
-		</jar>
-
-		<java maxmemory="1024m" classname="jshrink.Jshrink" fork="true">
-			<arg line="hcl-example.jar -o ../hcl-example.jar -license '12/25/2006 Stan Diamond ZEGRNVXBJLIAEIKM' -keepPublic -keepPackage -keepPrivate -keepProtected -noRenameClasses -noRenamePackage -noRenamePath -noRenamePrivate -noRenameProtected -noRenamePublic -keep 'org.apache.axis.?' -keep 'org.genepattern.io.?' -keep 'org.freehep.graphicsio.?' -keep 'javax.media.jai.?' -keep 'javax.media.?' -keep 'com.sun.media.jai.?'" />
-			<classpath>
-				<pathelement location="../lib/jshrink.jar" />
-			</classpath>
-		</java>
-	</target>
-
-
-	<target depends="_init" name="run">
-		<java maxmemory="512m" jar="../${OPTIMIZED_JAR}" fork="true">
-			<arg value="test-data/all_aml_train.neighbors.cdt" />
-			<arg value="-gtest-data/all_aml_train.neighbors.gtr" />
-			<arg value="-atest-data/all_aml_train.neighbors.atr" />
-		</java>
 	</target>
 
 </project>
