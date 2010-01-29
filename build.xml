@@ -26,6 +26,7 @@
         <copy file="lib/hcl-o.jar" todir="."/>
           <jar destfile="hcl-o.jar" basedir="." update="true" includes="org/genepattern/**">
               <zipgroupfileset refid="jar.lib" />
+              <fileset dir="src" includes="**/resources/**" />
          </jar>
     </target>
 
