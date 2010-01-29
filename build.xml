@@ -8,7 +8,7 @@
     <target name="_init" depends="init">
 		<path id="library.classpath">
             <fileset dir="lib" id="jar.lib" includes="commons-math-2.0.jar" />
-            <fileset dir="lib" id="hcl-o-lib" includes="hcl-o.jar" />
+            <fileset dir="lib" id="hcl-o-lib" includes="hcl-o.jar forms-1.1.0.jar" />
         </path>
 
     </target>
@@ -24,7 +24,7 @@
 
     <target name="update_hcl-o.jar">
         <copy file="lib/hcl-o.jar" todir="."/>
-          <jar destfile="hcl-o.jar" basedir="." update="true" includes="org/genepattern/plot/**">
+          <jar destfile="hcl-o.jar" basedir="." update="true" includes="org/genepattern/**">
               <zipgroupfileset refid="jar.lib" />
          </jar>
     </target>
