@@ -1180,7 +1180,7 @@ public class HeatMap extends JComponent implements Drawable {
 	    aboutDialog = CenteredDialog.createInstance(parentComponent);
 	    aboutDialog.setTitle("About");
 	    JLabel text = new JLabel(
-		    "<html><p align=\"center\">Created by Joshua Gould.<br><br>Please send questions and comments to gp-help@broad.mit.edu.",
+		    "<html><p align=\"center\">Created by Joshua Gould.<br><br>Please send questions and comments to gp-help@broadinstitute.org.",
 		    SwingConstants.CENTER);
 	    aboutDialog.getContentPane().add(text);
 	    aboutDialog.setResizable(false);
