@@ -149,6 +149,7 @@ public class HCLApp {
 
 	frame.setJMenuBar(new HeatMapMenuBar(c, Collections.EMPTY_MAP));
 	frame.setContentPane(c);
+	// The addition of the next line is the only change from the v8 code.
 	frame.setPreferredSize(new Dimension(1024, 768));
 	UIUtil.showFrame(frame);
     }
