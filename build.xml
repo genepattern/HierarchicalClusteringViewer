@@ -14,7 +14,9 @@
     </target>
 
      <target name="compile" depends="_init">
-		<javac debug="true" defaultexcludes="false" deprecation="true" destdir="."  optimize="false"
+        <mkdir dir="bin" />
+		<javac debug="true" defaultexcludes="false" includeantruntime="false" 
+		       deprecation="true" destdir="bin"  optimize="false"
                proceed="false"
                srcdir="src" target="${java.target}"
                source="${java.target}">
@@ -23,24 +25,17 @@
 	</target>
 
     <target name="update_hcl-o.jar">
-        <copy file="lib/hcl-o.jar" todir="."/>
-          <jar destfile="hcl-o.jar" basedir="." update="true" includes="org/genepattern/**">
+        <jar destfile="lib/hcl-o.jar" basedir="bin" update="true" includes="org/genepattern/**" defaultexcludes="true">
               <zipgroupfileset refid="jar.lib" />
               <fileset dir="src" includes="**/resources/**" />
-         </jar>
+       </jar>
     </target>
 
-
-    <target name="clean">
-        <delete>
-            <fileset dir="." includes="hcl-o.jar, org"/>
-        </delete>
-    </target>
-
-    <target depends="clean, compile, update_hcl-o.jar" name="create-zip">
+    <target depends="compile, update_hcl-o.jar" name="create-zip">
         <antcall target="prezip"/>
 		<zip destfile="${dest.dir}/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
-            <fileset dir="." includes="hcl-o.jar, manifest, *.pdf"/>
+            <fileset dir="." includes="manifest, *.pdf"/>
+            <fileset dir="lib" includes="*.jar"/>
         </zip>
 		<antcall target="postzip"/>
     </target>
