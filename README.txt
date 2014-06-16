@@ -26,3 +26,8 @@ Look to the hcl-o.jar for guidance about what files are required.
 Notes for v10:
 - Recovered only the org.genepattern.clustering.hierarchical.HCLApp class (from 8_0 Tag). 
   One line change to fix launching on a Mac with Java 7.
+
+Notes for v11:
+- This was a no-compile release with no need to recover any further source.  However, it should be noted
+  that JAR attributes and signing were required and that these HAVE NOT been incorporated into the build
+  file.  Check the JARs in 'lib' for details. 
