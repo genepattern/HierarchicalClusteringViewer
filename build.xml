@@ -1,0 +1,42 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project basedir="" default="create-zip" name="HierarchicalClusteringViewer">
+	<property name="dirOffset" value="../" />
+    <property name="OPTIMIZED_JAR" value="hcl-o.jar" />
+    <import file="${dirOffset}/commontargets.xml" />
+
+    
+    <target name="_init" depends="init">
+		<path id="library.classpath">
+            <fileset dir="lib" id="jar.lib" includes="commons-math-2.0.jar" />
+            <fileset dir="lib" id="hcl-o-lib" includes="hcl-o.jar forms-1.1.0.jar" />
+        </path>
+
+    </target>
+
+     <target name="compile" depends="_init">
+        <mkdir dir="bin" />
+		<javac debug="true" defaultexcludes="false" includeantruntime="false" 
+		       deprecation="true" destdir="bin"  optimize="false"
+               proceed="false"
+               srcdir="src" target="${java.target}"
+               source="${java.target}">
+			<classpath refid="library.classpath"/>
+		</javac>
+	</target>
+
+    <target name="update_hcl-o.jar">
+        <jar destfile="lib/hcl-o.jar" basedir="bin" update="true" includes="org/genepattern/**" defaultexcludes="true">
+              <zipgroupfileset refid="jar.lib" />
+              <fileset dir="src" includes="**/resources/**" />
+       </jar>
+    </target>
+
+    <target depends="compile, update_hcl-o.jar" name="create-zip">
+        <antcall target="prezip"/>
+		<zip destfile="${dest.dir}/${ant.project.name}.zip" whenempty="fail" defaultexcludes="true">
+            <fileset dir="." includes="manifest, *.pdf"/>
+            <fileset dir="lib" includes="*.jar"/>
+        </zip>
+		<antcall target="postzip"/>
+    </target>
+</project>
