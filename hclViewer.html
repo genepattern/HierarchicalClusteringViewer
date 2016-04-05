@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <link rel="stylesheet" type="text/css" href="css/jheatmap-gp_latest.css" />
+    <link rel="stylesheet" type="text/css" href="font-awesome/css/font-awesome.min.css"/>
+    <link rel="stylesheet" type="text/css" href="//code.jquery.com/ui/1.11.4/themes/redmond/jquery-ui.css"/>
+    <link rel="stylesheet" type="text/css" href="css/spectrum.css"/>
+    <link rel="stylesheet" type="text/css" href="css/hclViewer.css"/>
+
+    <!-- jQuery JS-->
+    <script type="text/javascript" src="//code.jquery.com/jquery-2.1.4.min.js"></script>
+    <script type="text/javascript" src="//code.jquery.com/ui/1.11.4/jquery-ui.min.js"></script>
+    <script type="text/javascript" src="js/jheatmap-gp_latest.js"></script>
+    <script type="text/javascript" src="js/spectrum.js"></script>
+    <script type="text/javascript" src="js/gpUtil.js"></script>
+    <script type="text/javascript" src="js/gp_lib.js"></script>
+    <script type="text/javascript" src="js/gpHeatmapLib.js"></script>
+    <script type="text/javascript" src="js/hclViewer.js"></script>
+</head>
+<body>
+    <div id="fileLoaded"></div>
+
+    <div id="hclViewerMain">
+        <div id="toolbar">
+            <button id="zoomIn" title="Zoom In" ><i class="fa fa-plus fa-lg"></i></button>
+            <button id="zoomOut" title="Zoom Out" ><i class="fa fa-minus fa-lg"></i></button>
+            <button id="resetZoom" title="Reset Zoom" >100%</button>
+            <button id="reload" title="Reload" ><i class="fa fa-refresh fa-lg"></i></button>
+            <button id="options" title="Options" ><i class="fa fa-cog fa-lg"></i></button>
+            <button id="saveImage" title="Save Image" ><i class="fa fa-save fa-lg"></i></button>
+            <button id="find" title="Find" ><i class="fa fa-search fa-lg"></i></button>
+            <button id="help" title="Help" ><i class="fa fa-question-circle fa-lg"></i></button>
+        </div>
+
+        <div id="hclViewer"></div>
+    </div>
+</body>
+</html>
