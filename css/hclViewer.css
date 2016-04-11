@@ -1,0 +1,15 @@
+.error
+{
+    color: red;
+}
+
+.errorDialog div
+{
+    max-height: 200px;
+}
+
+#toolbar button
+{
+    font-size: 60%;
+}
+
