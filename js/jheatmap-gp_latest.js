@@ -166,6 +166,23 @@ var BrowserDetect = {
 BrowserDetect.init();
 
 
+jheatmap.utils.Node = function(id, correlation, left, right, parent) {
+    this.id = id;
+    this.correlation = correlation == undefined ? 1: correlation;
+    this.left = left;
+    this.right = right;
+    this.parent = parent;
+    this.index;
+
+    if ((left != null) && (right != null)) {
+        this.index = (right.index + left.index) / 2;
+    }
+    this.isLeaf = function()
+    {
+        return ((this.left == undefined) && (this.right == undefined));
+    };
+};
+
 /*
  ---
 
@@ -302,7 +319,7 @@ jheatmap.utils.RGBColor = function (color) {
     this.r = (this.r < 0 || isNaN(this.r)) ? 0 : ((this.r > 255) ? 255 : this.r);
     this.g = (this.g < 0 || isNaN(this.g)) ? 0 : ((this.g > 255) ? 255 : this.g);
     this.b = (this.b < 0 || isNaN(this.b)) ? 0 : ((this.b > 255) ? 255 : this.b);
-}
+};
 
 /**
  * @return Hexadecimal representation of the color. Example: #FF0323
@@ -528,6 +545,326 @@ jheatmap.readers.AnnotationReader.prototype.read = function (result, initialize)
 };
 
 /**
+ * A GenePattern CDT file matrix reader. The file has to follow this format:
+ *
+ *
+ * @example
+ * new jheatmap.readers.AtrGtrFileReader({ url: "filename.atr" });
+ * new jheatmap.readers.AtrGtrFileReader({ url: "filename.gtr" });
+ *
+ * @author Marc-Danie Nazaire
+ * @class
+ * @param {string}  p.url                 File url
+ *
+ */
+jheatmap.readers.AtrGtrFileReader = function (p) {
+    p = p || {};
+    this.url = p.url || "";
+    this.separator = p.separator || "\t";
+    this.handleError = p.handleError;
+
+};
+
+
+/**
+ * Asynchronously reads a text separated value file, the result is loaded in the 'heatmap.hcl' parameter.
+ *
+ * @param {jheatmap.Heatmap}     heatmap     The destination heatmap.
+ * @param {function}    initialize  A callback function that is called when the file is loaded.
+ *
+ */
+jheatmap.readers.AtrGtrFileReader.prototype.read = function (result, initialize)
+{
+    var sep = this.separator;
+    var url = this.url;
+    var handleError = this.handleError;
+
+    var credentials = true;
+    if(url.indexOf("https://") === 0)
+    {
+        credentials = true;
+    }
+
+    var nodeIdToNodeMap = {};
+    var currentNode;
+
+    jQuery.ajax({
+        url: url,
+        dataType: "text",
+        xhrFields: {
+            withCredentials: credentials
+        },
+        crossDomain: true,
+        success: function (file) {
+
+            try {
+                var lines = file.split(/\r\n|\r|\n/);
+
+                if(file == "")
+                {
+                    throw("Dataset is too large to load.");
+                }
+
+                jQuery.each(lines, function (lineCount, line)
+                {
+                    line = line.trim();
+                    if (line.length > 0)
+                    {
+                        var dataItems = line.splitCSV(sep);
+
+                        if(dataItems.length == 0)
+                        {
+                            throw("No data found on line " + lineCount);
+                        }
+
+                        if(dataItems.length < 4)
+                        {
+                            throw("Expecting 4 columns on line " + lineCount + " but found " + dataItems.length);
+                        }
+
+                        var id = dataItems[0];
+
+                        var leftNode = nodeIdToNodeMap[dataItems[1]];
+                        var rightNode = nodeIdToNodeMap[dataItems[2]];
+
+                        nodeIdToNodeMap[dataItems[1]] = leftNode;
+                        nodeIdToNodeMap[dataItems[2]] = rightNode;
+
+                        var correlation = dataItems[3];
+
+                        if(leftNode === undefined)
+                        {
+                            leftNode = new jheatmap.utils.Node(dataItems[1]);
+                            leftNode.index = result.hcl.aidToIndex[dataItems[1]];
+                        }
+
+                        if(rightNode == undefined)
+                        {
+                            rightNode = new jheatmap.utils.Node(dataItems[2]);
+                            rightNode.index = result.hcl.aidToIndex[dataItems[2]];
+                        }
+
+                        currentNode = new jheatmap.utils.Node(id, correlation, leftNode, rightNode, null);
+                        leftNode.parent = currentNode;
+                        rightNode.parent = currentNode;
+
+                        nodeIdToNodeMap[id] = currentNode;
+                    }
+                });
+            }
+            catch(err)
+            {
+                if(err !== undefined && err.length > 0
+                    && handleError != undefined && typeof handleError == 'function')
+                {
+                    var status = {
+                        error: err
+                    };
+
+                    console.log(err);
+                    handleError(status);
+                    return;
+                }
+            }
+
+            result.hcl.rootNode = currentNode;
+
+            result.ready = true;
+            initialize.call(this);
+        }
+    });
+};
+
+/**
+ * A GenePattern CDT file matrix reader. The file has to follow this format:
+ *
+ *
+ * @example
+ * new jheatmap.readers.CDTFileReader({ url: "filename.cdt" });
+ *
+ * @author Marc-Danie Nazaire
+ * @class
+ * @param {string}  p.url                 File url
+ *
+ */
+jheatmap.readers.CDTFileReader = function (p) {
+    p = p || {};
+    this.url = p.url || "";
+    this.separator = p.separator || "\t";
+    this.handleError = p.handleError;
+
+};
+
+
+/**
+ * Asynchronously reads a text separated value file, the result is loaded in the 'heatmap' parameter.
+ *
+ * @param {jheatmap.Heatmap}     heatmap     The destination heatmap.
+ * @param {function}    initialize  A callback function that is called when the file is loaded.
+ *
+ */
+jheatmap.readers.CDTFileReader.prototype.read = function (heatmap, initialize) {
+
+    var sep = this.separator;
+    var url = this.url;
+    var handleError = this.handleError;
+
+    var credentials = true;
+    if(url.indexOf("https://") === 0)
+    {
+        credentials = true;
+    }
+
+    var aid = [];
+    var eweight = [];
+
+    jQuery.ajax({
+        url: url,
+        dataType: "text",
+        xhrFields: {
+            withCredentials: credentials
+        },
+        crossDomain: true,
+        success: function (file) {
+
+            try {
+                //var lines = file.replace('\r', '').split('\n');
+                var lines = file.split(/\r\n|\r|\n/);
+
+                if(file == "")
+                {
+                    throw("Dataset is too large to load.");
+                }
+
+                jQuery.each(lines, function (lineCount, line)
+                {
+                    line = line.trim();
+                    if (line.length > 0)
+                    {
+                        if (lineCount === 0)
+                        {
+                            //parse the third line which contains the sample names
+                            var headerLine = line.splitCSV(sep);
+                            headerLine.shift();
+                            headerLine.shift();
+                            headerLine.shift();
+
+                            if(headerLine.length == 0)
+                            {
+                                throw("No sample names found in CDT file");
+                            }
+
+                            heatmap.cells.header = headerLine;
+                        }
+                        else if(lineCount === 1)
+                        {
+                            aid = line.splitCSV(sep);
+                            aid.splice(0,3);
+                        }
+                        else if(lineCount === 2)
+                        {
+                            eweight = line.splitCSV(sep);
+                            eweight.splice(0,3);
+                        }
+                        else
+                        {
+                            var valLine = line.splitCSV(sep);
+                            heatmap.cells.values[heatmap.cells.values.length] = valLine;
+                        }
+                    }
+                });
+            }
+            catch(err)
+            {
+                if(err !== undefined && err.length > 0
+                    && handleError != undefined && typeof handleError == 'function')
+                {
+                    var status = {
+                        error: err
+                    };
+
+                    console.log(err);
+                    handleError(status);
+                    return;
+                }
+            }
+
+            if (heatmap.cols.header === undefined || heatmap.cols.header === null) {
+                heatmap.cols.header = [];
+            }
+            heatmap.cols.header.unshift("Samples");
+            heatmap.cols.header.push("AID");
+            heatmap.cols.header.push("EWEIGHT");
+
+
+            if (heatmap.cols.values == undefined ) {
+                heatmap.cols.values = [];
+            }
+
+            for (var i = 0; i < heatmap.cells.header.length; i++) {
+                if(heatmap.cols.values[i] == undefined)
+                {
+                    heatmap.cols.values[i] = [];
+                }
+
+                heatmap.cols.values[i].unshift(heatmap.cells.header[i]);
+
+                if(aid != undefined && aid.length > i)
+                {
+                    heatmap.cols.values[i].push(aid[i]);
+                    heatmap.cols.hcl.aidToIndex[aid[i]] = i;
+                }
+
+                if(eweight != undefined && eweight.length > i)
+                {
+                    heatmap.cols.values[i].push(eweight[i]);
+                }
+            }
+
+            var count = 0;
+            var sum = 0;
+            var cellValues = [];
+            heatmap.rows.header = [ "Feature Name", "Description" ];
+            heatmap.rows.valueIndexMap = {};
+            for (var row = 0; row < heatmap.cells.values.length; row++) {
+                heatmap.rows.valueIndexMap[heatmap.cells.values[row][0]] = row;
+                heatmap.rows.values[heatmap.rows.values.length] = [ heatmap.cells.values[row][0], heatmap.cells.values[row][1]];
+                for (var col = 0; col < heatmap.cols.values.length; col++) {
+                    cellValues[cellValues.length] = [ heatmap.cells.values[row][col + 3] ];
+
+                    //Keep track of minimum and maximum value in each row
+                    var value = parseFloat(heatmap.cells.values[row][col + 3]);
+                    if (!isNaN(value)) {
+                        if (heatmap.cells.maxValue == undefined || heatmap.cells.maxValue == null
+                            || heatmap.cells.maxValue < value) {
+                            heatmap.cells.maxValue = value;
+                        }
+
+                        if (heatmap.cells.minValue == undefined || heatmap.cells.minValue == null
+                            || heatmap.cells.minValue > value) {
+                            heatmap.cells.minValue = value;
+                        }
+
+                        sum += value;
+                        count++;
+                    }
+                }
+            }
+
+            heatmap.cells.meanValue = sum / count;
+            delete heatmap.cells.header;
+            delete heatmap.cells.values;
+            heatmap.cells.header = [ "Value" ];
+            heatmap.cells.values = cellValues;
+
+
+            heatmap.cells.ready = true;
+            initialize.call(this);
+        }
+    });
+};
+
+/**
  * A text separated value GenePattern GCT file matrix reader. The file has to follow this format:
  *
  * <pre><code>
@@ -574,6 +911,10 @@ jheatmap.readers.GctHeatmapReader.prototype.read = function (heatmap, initialize
         credentials = true;
     }
 
+    if (heatmap.cols.header === undefined || heatmap.cols.header === null) {
+        heatmap.cols.header = [];
+    }
+
     jQuery.ajax({
         url: url,
         dataType: "text",
@@ -591,6 +932,8 @@ jheatmap.readers.GctHeatmapReader.prototype.read = function (heatmap, initialize
                 {
                     throw("Dataset is too large to load.");
                 }
+
+                heatmap.cols.header.unshift("AID");
 
                 jQuery.each(lines, function (lineCount, line)
                 {
@@ -640,10 +983,6 @@ jheatmap.readers.GctHeatmapReader.prototype.read = function (heatmap, initialize
                     handleError(status);
                     return;
                 }
-            }
-
-            if (heatmap.cols.header === undefined || heatmap.cols.header === null) {
-                heatmap.cols.header = [];
             }
 
             heatmap.cols.header.unshift("Samples");
@@ -2929,6 +3268,186 @@ jheatmap.components.LegendPanel.prototype.paint = function(context)
 };
 
 
+jheatmap.components.ColumnDendrogramPanel = function(drawer, heatmap)
+{
+    this.heatmap = heatmap;
+
+    // Create markup
+    this.markup = $("<th>");
+    this.canvas = $("<canvas class='dendrogram' id='colDendrogram' width='" + heatmap.size.width + "' height='"+heatmap.cols.labelSize+"'></canvas>");
+    this.markup.append(this.canvas);
+};
+
+jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, offset_y) {
+    var heatmap = this.heatmap;
+
+    if(heatmap.cols.hcl.rootNode === null)
+    {
+        return;
+    }
+
+    var cz = heatmap.cols.zoom;
+    var textSpacing = 5;
+    var startCol = heatmap.offset.left;
+    var endCol = heatmap.offset.right;
+
+    var canvas = this.canvas.get()[0];
+    var colCtx = canvas.getContext('2d');
+
+    var offset_x = 0;
+
+    if(context !== undefined && context !== null)
+    {
+        colCtx = context;
+        offset_x = this.canvas.offset().left;
+    }
+    else
+    {
+        offset_y = 0;
+        colCtx.clearRect(0, 0, colCtx.canvas.width, colCtx.canvas.height);
+    }
+
+    colCtx.fillStyle = 'white';
+    colCtx.fillRect(offset_x, offset_y, colCtx.canvas.width, colCtx.canvas.height);
+
+    // Bug clear canvas workaround
+    androidBug39247 = function() {
+        canvas.style.opacity = 0.99;
+        setTimeout(function() {
+            canvas.style.opacity = 1;
+        }, 0.90); //1);
+    }
+
+    androidBug39247();
+
+    if(heatmap.cols.hcl === undefined)
+    {
+        return;
+    }
+
+    var ymax = 0.969846;
+    var ymin = 0.812395;
+    var bottomGutter = 4;
+    var topGutter = 4;
+    var yPixPerUnit = Math.max(canvas.height - bottomGutter - topGutter - 1, 1) / (ymax - ymin);
+    // pixelMatrix[0] = xPixPerUnit;
+    var pixelMatrix = [];
+    pixelMatrix.push();
+    pixelMatrix.push();
+    pixelMatrix.push();
+    pixelMatrix.push();
+    pixelMatrix.push();
+    pixelMatrix.push();
+    pixelMatrix.push();
+
+    pixelMatrix[1] = 0;
+    pixelMatrix[2] = 0;
+    pixelMatrix[3] = -yPixPerUnit;
+    // pixelMatrix[4] = -xmin*xPixPerUnit+leftGutter;
+    pixelMatrix[5] = ymax * yPixPerUnit + topGutter;
+
+
+    var yToPix = function (y) {
+        var pix = pixelMatrix[3] * y + pixelMatrix[5];
+        return Math.floor(pix);
+    };
+    var drawSingleNode = function(context, node)
+    {
+        /*Color color = node.getColor();
+        if (node.isSelected()) {
+            color = this.selectedColor;
+        }*/
+
+
+        var  left = node.left;
+        var right = node.right;
+        /*
+        // set up points for poly line
+        var rx = 0;
+        var lx = 0;
+        var ry = 0;
+        var ly = 0;
+        var elementWidth = 12;
+        if (right != null) {
+            rx = Math.ceil(8* (right.index * elementWidth) + elementWidth / 2.0);
+            ry = Math.ceil(9 * right.correlation);
+        }
+        if (left != null) {
+            lx = Math.ceil(8* (left.index * elementWidth) + elementWidth / 2.0);
+            ly = Math.ceil(9 * left.correlation);
+        }
+
+        if (subtractElementWidth) { // for aravind
+            lx -= elementWidth;
+            rx -= elementWidth;
+        }
+        var ty =Math.ceil(2 * node.correlation);
+        */
+
+        var rx = 0;
+        var lx = 0;
+        var ry = 0;
+        var ly = 0;
+        var elementWidth = 23;
+
+        if (right != null) {
+            rx = Math.round((right.index * elementWidth) + elementWidth / 2.0);
+            ry = yToPix(right.correlation);
+        }
+        if (left != null) {
+            lx = Math.round ((left.index * elementWidth) + elementWidth / 2.0);
+            ly = yToPix(left.correlation);
+        }
+
+        if (subtractElementWidth) { // for aravind
+            lx -= elementWidth;
+            rx -= elementWidth;
+        }
+
+        var ty = yToPix(node.correlation);
+        context.lineWidth = 1;
+
+        context.beginPath();
+        context.moveTo(rx, ry);
+
+        context.lineTo(rx, ry);
+        context.stroke();
+
+
+        context.lineTo(rx, ty);
+        context.stroke();
+
+
+        context.lineTo(lx, ty);
+        context.stroke();
+
+
+        /*context.lineTo(lx, ly);
+        context.stroke();*/
+    };
+
+    var draw = function(context, node)
+    {
+        if(node === undefined)
+        {
+            return;
+        }
+
+        var left = node.left; //instance of a Node object
+        var right = node.right; //instance of a Node object
+
+        drawSingleNode(context, node);
+        if (left.isLeaf() === false) {
+            draw(context, left);
+        }
+        if (right.isLeaf() === false) {
+            draw(context, right);
+        }
+   };
+
+    draw(colCtx, heatmap.cols.hcl.rootNode);
+};
+
 jheatmap.components.ColumnAnnotationPanel = function(drawer, heatmap)
 {
     this.heatmap = heatmap;
@@ -3351,7 +3870,7 @@ jheatmap.components.ColumnHeaderPanel = function(drawer, heatmap) {
               drawer.paint();
      });*/
 
-     /*Removed by Marc-Danie 3-25-16 to prevent page scrolling
+     /*Disabled by Marc-Danie 3-25-16 to prevent page scrolling
      this.canvas.bind('mouseover', function(e) {
          drawer.handleFocus(e);
      });
@@ -4874,6 +5393,14 @@ jheatmap.HeatmapDimension = function (heatmap) {
      */
     this.selected = [];
 
+    /**
+     * contains rootNode jheatmap.utils.Node for drawing a dendrogram
+     * @type object containing a jheatmap.utils.Node
+     */
+    this.hcl = {
+        rootNode: null,
+        aidToIndex: {}
+    };
 };
 
 jheatmap.HeatmapDimension.prototype.init = function () {
@@ -4927,6 +5454,7 @@ jheatmap.HeatmapDrawer = function (heatmap) {
 
     // Components
     var controlPanel = new jheatmap.components.ControlsPanel(drawer, heatmap);
+    var columnDendrogramPanel = new jheatmap.components.ColumnDendrogramPanel(drawer, heatmap);
     var columnHeaderPanel = new jheatmap.components.ColumnHeaderPanel(drawer, heatmap);
     var columnAnnotationPanel = new jheatmap.components.ColumnAnnotationPanel(drawer, heatmap);
     var rowHeaderPanel = new jheatmap.components.RowHeaderPanel(drawer, heatmap);
@@ -4950,6 +5478,12 @@ jheatmap.HeatmapDrawer = function (heatmap) {
         {
             table.append(legendPanel.markup);
         }
+
+        var dendrogramRow = $("<tr>");
+        dendrogramRow.append("<th>");
+        dendrogramRow.append(columnDendrogramPanel.markup);
+
+        table.append(dendrogramRow);
 
         var firstRow = $("<tr>");
         table.append(firstRow);
@@ -5093,6 +5627,9 @@ jheatmap.HeatmapDrawer = function (heatmap) {
 
         //Heatmap Legend
         legendPanel.paint(context);
+
+        //Heatmap column dendrogram
+        columnDendrogramPanel.paint(context, offsetY);
 
         // Vertical scroll
         if(!hideScrollBars)
@@ -9082,5 +9619,4 @@ var console = console || {"log":function () {
 
         });
     };
-
 })(jQuery);
