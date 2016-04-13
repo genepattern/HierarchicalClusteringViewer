@@ -1,7 +1,7 @@
 var gpVisual = {};
 
 gpVisual.HeatMap = function(options) {
-    var datasetUrl = options.dataUrl;
+    var datasetUrl = options.data !== undefined ? options.data.url : null;
     var hContainer = options.container;
     var gpHeatmap = null;
     var colors = null;
@@ -91,7 +91,7 @@ gpVisual.HeatMap = function(options) {
             {
                 url: datasetUrl,
                 handleError: options.onLoadData
-            })  ;
+            });
         }
         else
         {
@@ -1066,5 +1066,46 @@ gpVisual.HeatMap = function(options) {
         gpHeatmap.rows.order = newOrder;
 
         self.drawHeatMap(options);
-    }
+    };
+
+    this.loadAtrFile = function(atrFile)
+    {
+        var atrFileReader = new jheatmap.readers.AtrGtrFileReader(
+        {
+            url: atrFile,
+            handleError: function(status)
+            {
+                if(status)
+                console.log("Failed to load atr file: " + status.error);
+            }
+        });
+
+        var atrFileAdded = function()
+        {
+            console.log("Add atr file");
+            self.drawHeatMap();
+        };
+
+        atrFileReader.read(gpHeatmap.cols, atrFileAdded);
+    };
+
+    this.loadGtrFile = function(atrFile)
+    {
+        var gtrFileReader = new jheatmap.readers.AtrGtrFileReader(
+            {
+                url: atrFile,
+                handleError: function(status)
+                {
+                    if(status)
+                        console.log("Failed to load atr file: " + status.error);
+                }
+            });
+
+        var gtrFileAdded = function()
+        {
+            console.log("Add gtr file");
+        };
+
+        gtrFileReader.read(gpHeatmap.rows, gtrFileAdded);
+    };
 };
