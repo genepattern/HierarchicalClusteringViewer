@@ -173,6 +173,7 @@ jheatmap.utils.Node = function(id, correlation, left, right, parent) {
     this.right = right;
     this.parent = parent;
     this.index;
+    this.selected = false;
 
     if ((left != null) && (right != null)) {
         this.index = (right.index + left.index) / 2;
@@ -587,6 +588,8 @@ jheatmap.readers.AtrGtrFileReader.prototype.read = function (result, initialize)
 
     var nodeIdToNodeMap = {};
     var currentNode;
+    var minCorrelation;
+    var maxCorrelation;
 
     jQuery.ajax({
         url: url,
@@ -632,6 +635,10 @@ jheatmap.readers.AtrGtrFileReader.prototype.read = function (result, initialize)
 
                         var correlation = dataItems[3];
 
+                        if (lineCount == 0) {
+                            maxCorrelation = correlation;
+                        }
+
                         if(leftNode === undefined)
                         {
                             leftNode = new jheatmap.utils.Node(dataItems[1]);
@@ -649,6 +656,9 @@ jheatmap.readers.AtrGtrFileReader.prototype.read = function (result, initialize)
                         rightNode.parent = currentNode;
 
                         nodeIdToNodeMap[id] = currentNode;
+
+                        // set min correlation - will be last node parsed
+                        minCorrelation = correlation;
                     }
                 });
             }
@@ -668,6 +678,8 @@ jheatmap.readers.AtrGtrFileReader.prototype.read = function (result, initialize)
             }
 
             result.hcl.rootNode = currentNode;
+            result.hcl.minCorrelation = minCorrelation;
+            result.hcl.maxCorrelation = maxCorrelation;
 
             result.ready = true;
             initialize.call(this);
@@ -3276,10 +3288,58 @@ jheatmap.components.ColumnDendrogramPanel = function(drawer, heatmap)
     this.markup = $("<th>");
     this.canvas = $("<canvas class='dendrogram' id='colDendrogram' width='" + heatmap.size.width + "' height='"+heatmap.cols.labelSize+"'></canvas>");
     this.markup.append(this.canvas);
+
+    //keep track of last Clicked Location
+    this.lastClickX = "";
+    this.lastClickY = "";
+
+    var eventTarget = this.canvas;
+
+    // Return true if the col is selected
+    var isSelected = function(col) {
+        return $.inArray(heatmap.cols.order[col], heatmap.cols.selected) > -1;
+    };
+
+    // Computes the relative to canvas x, y and the row
+    var getCenter = function (e) {
+        e.gesture.center.x = e.gesture.center.pageX - eventTarget.offset().left;
+        e.gesture.center.y = e.gesture.center.pageY - eventTarget.offset().top;
+        e.gesture.center.col = Math.floor(e.gesture.center.x / heatmap.cols.zoom) + heatmap.offset.left;
+        return e.gesture.center;
+    };
+
+    // Select multiple rows or move the selected rows
+    var firstCol;
+    var firstX;
+    var firstZoom;
+    var doingPinch = false;
+    var lastMovedCol = null;
+    var movingSelection;
+
+    this.canvas.bind('tap', function (e) {
+        e.gesture.preventDefault();
+        heatmap.focus.row = undefined;
+        heatmap.focus.col = undefined;
+
+        e.gesture.preventDefault();
+        var center = getCenter(e);
+        heatmap.cols.hcl.lastClickX = center.x;
+        heatmap.cols.hcl.lastClickY = center.y;
+        /*firstCol = center.col;
+        firstX = center.x;
+        firstZoom = heatmap.cols.zoom;*/
+
+        /*lastMovedCol = firstCol;
+        movingSelection = isSelected(firstCol);*/
+        drawer.paint();
+    });
+
 };
 
 jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, offset_y) {
     var heatmap = this.heatmap;
+    var lastClickX = heatmap.cols.hcl.lastClickX;
+    var lastClickY = heatmap.cols.hcl.lastClickY;
 
     if(heatmap.cols.hcl.rootNode === null)
     {
@@ -3299,7 +3359,7 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
     if(context !== undefined && context !== null)
     {
         colCtx = context;
-        offset_x = this.canvas.offset().left;
+       // offset_x = this.canvas.offset().left;
     }
     else
     {
@@ -3325,8 +3385,8 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
         return;
     }
 
-    var ymax = 0.969846;
-    var ymin = 0.812395;
+    var ymax = heatmap.cols.hcl.maxCorrelation;//0.969846;
+    var ymin = heatmap.cols.hcl.minCorrelation; //0.812395;
     var bottomGutter = 4;
     var topGutter = 4;
     var yPixPerUnit = Math.max(canvas.height - bottomGutter - topGutter - 1, 1) / (ymax - ymin);
@@ -3346,19 +3406,17 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
     // pixelMatrix[4] = -xmin*xPixPerUnit+leftGutter;
     pixelMatrix[5] = ymax * yPixPerUnit + topGutter;
 
-
     var yToPix = function (y) {
         var pix = pixelMatrix[3] * y + pixelMatrix[5];
         return Math.floor(pix);
     };
+
     var drawSingleNode = function(context, node)
     {
         /*Color color = node.getColor();
         if (node.isSelected()) {
             color = this.selectedColor;
         }*/
-
-
         var  left = node.left;
         var right = node.right;
         /*
@@ -3388,42 +3446,80 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
         var lx = 0;
         var ry = 0;
         var ly = 0;
-        var elementWidth = 23;
+
+        var elementWidth = heatmap.cols.zoom;
 
         if (right != null) {
-            rx = Math.round((right.index * elementWidth) + elementWidth / 2.0);
+            rx = Math.round(((right.index - startCol) * elementWidth) + elementWidth / 2.0);
             ry = yToPix(right.correlation);
         }
         if (left != null) {
-            lx = Math.round ((left.index * elementWidth) + elementWidth / 2.0);
+            lx = Math.round (((left.index - startCol) * elementWidth) + elementWidth / 2.0);
             ly = yToPix(left.correlation);
         }
 
-        if (subtractElementWidth) { // for aravind
+        /*if (subtractElementWidth) { // for aravind
             lx -= elementWidth;
             rx -= elementWidth;
+        }*/
+
+        var canvasHeight = context.canvas.height;
+        var ty = yToPix(node.correlation);
+
+
+        //check to see if this node was selected
+        //include 4 pixel tolerance
+        if(!node.selected == true && (lastClickY !== null && lastClickY >= ((canvasHeight - ty) - 4)
+            &&  lastClickY <= ((canvasHeight - ty) + 4))
+            && (lastClickX !== null && lastClickX >= rx && lastClickX <= lx))
+        {
+            node.selected = true;
         }
 
-        var ty = yToPix(node.correlation);
+        if(node.selected == true)
+        {
+            context.strokeStyle = 'green';
+            node.right.selected = true;
+            node.left.selected = true;
+        }
+        else
+        {
+            node.right.selected = false;
+            node.left.selected = false;
+        }
+
         context.lineWidth = 1;
 
         context.beginPath();
-        context.moveTo(rx, ry);
-
-        context.lineTo(rx, ry);
+        context.moveTo(rx, canvasHeight - ry);
+        context.lineTo(rx, canvasHeight - ty);
         context.stroke();
 
-
-        context.lineTo(rx, ty);
+        context.beginPath();
+        context.moveTo(rx, canvasHeight - ty);
+        context.lineTo(lx, canvasHeight - ty);
         context.stroke();
 
-
-        context.lineTo(lx, ty);
+        context.lineTo(lx, canvasHeight - ly);
         context.stroke();
 
+        context.strokeStyle = 'black';
 
-        /*context.lineTo(lx, ly);
-        context.stroke();*/
+        //highlight column of selected sample
+        if ($.inArray(left.index, heatmap.cols.selected) > -1)
+        {
+            context.fillStyle = "rgba(0,0,0,0.1)";
+            context.fillRect(offset_x + (left.index - startCol) * cz, 0 + offset_y, cz, canvasHeight);
+            context.fillStyle = "black";
+        }
+
+        if ($.inArray(right.index, heatmap.cols.selected) > -1)
+        {
+            context.fillStyle = "rgba(0,0,0,0.1)";
+            context.fillRect(offset_x + (right.index - startCol) * cz, 0 + offset_y, cz, canvasHeight);
+            context.fillStyle = "black";
+        }
+
     };
 
     var draw = function(context, node)
@@ -3650,7 +3746,7 @@ jheatmap.components.ColumnHeaderPanel = function(drawer, heatmap) {
               }
           },
           items: {}
-    }
+    };
     for (var key=0; key < heatmap.actions.length; key++) {
             var action = heatmap.actions[key];
             if (action.columns != undefined) {
@@ -5399,7 +5495,11 @@ jheatmap.HeatmapDimension = function (heatmap) {
      */
     this.hcl = {
         rootNode: null,
-        aidToIndex: {}
+        aidToIndex: {},
+        minCorrelation: null,
+        maxCorrelation: null,
+        lastClickX: null,
+        lastClickY: null
     };
 };
 
