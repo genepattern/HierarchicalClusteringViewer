@@ -3411,6 +3411,11 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
         return Math.floor(pix);
     };
 
+    // Return true if the col is selected
+    var isSelected = function(col) {
+        return $.inArray(heatmap.cols.order[col], heatmap.cols.selected) > -1;
+    };
+
     var drawSingleNode = function(context, node)
     {
         /*Color color = node.getColor();
@@ -3467,25 +3472,54 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
         var ty = yToPix(node.correlation);
 
 
-        //check to see if this node was selected
-        //include 4 pixel tolerance
-        if(!node.selected == true && (lastClickY !== null && lastClickY >= ((canvasHeight - ty) - 4)
-            &&  lastClickY <= ((canvasHeight - ty) + 4))
-            && (lastClickX !== null && lastClickX >= rx && lastClickX <= lx))
+        //check to see if left children of this node was selected
+        //include 5 pixel tolerance
+        if(!node.selected == true && lastClickX !== null && lastClickY !== null
+           && ((lastClickY >= ((canvasHeight - ly) - 5) && lastClickY <= ((canvasHeight - ly) + 5))
+                && (lastClickX >= (lx - 5) && lastClickX <= (lx + 5))))
+         {
+             left.selected = true;
+         }
+        else
         {
-            node.selected = true;
+            left.selected = false;
         }
 
-        if(node.selected == true)
+
+        //check to see if right children of this node was selected
+        //include 5 pixel tolerance
+        if(!node.selected == true && lastClickX !== null && lastClickY !== null
+            && ((lastClickY >= ((canvasHeight - ry) - 5) && lastClickY <= ((canvasHeight - ry) + 5))
+                && ((lastClickX >= (rx - 5) && lastClickX <= (rx + 5)))))
         {
-            context.strokeStyle = 'green';
-            node.right.selected = true;
-            node.left.selected = true;
+            right.selected = true;
         }
         else
         {
-            node.right.selected = false;
-            node.left.selected = false;
+            right.selected = false;
+        }
+
+
+        if(node.selected == true)
+        {
+            context.strokeStyle = 'blue';
+            right.selected = true;
+            left.selected = true;
+
+            /*if(!isSelected(left.index))
+            {
+                heatmap.cols.selected.push(left.index);
+            }
+
+            if(!isSelected(right.index))
+            {
+                heatmap.cols.selected.push(right.index);
+            }*/
+        }
+        else
+        {
+            //node.right.selected = false;
+            //node.left.selected = false;
         }
 
         context.lineWidth = 1;
@@ -3506,20 +3540,19 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
         context.strokeStyle = 'black';
 
         //highlight column of selected sample
-        if ($.inArray(left.index, heatmap.cols.selected) > -1)
+        if (!node.selected && $.inArray(left.index, heatmap.cols.selected) > -1)
         {
             context.fillStyle = "rgba(0,0,0,0.1)";
             context.fillRect(offset_x + (left.index - startCol) * cz, 0 + offset_y, cz, canvasHeight);
             context.fillStyle = "black";
         }
 
-        if ($.inArray(right.index, heatmap.cols.selected) > -1)
+        if (!node.selected && $.inArray(right.index, heatmap.cols.selected) > -1)
         {
             context.fillStyle = "rgba(0,0,0,0.1)";
             context.fillRect(offset_x + (right.index - startCol) * cz, 0 + offset_y, cz, canvasHeight);
             context.fillStyle = "black";
         }
-
     };
 
     var draw = function(context, node)
@@ -3539,7 +3572,7 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
         if (right.isLeaf() === false) {
             draw(context, right);
         }
-   };
+    };
 
     draw(colCtx, heatmap.cols.hcl.rootNode);
 };
