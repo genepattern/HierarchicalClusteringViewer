@@ -173,15 +173,48 @@ jheatmap.utils.Node = function(id, correlation, left, right, parent) {
     this.right = right;
     this.parent = parent;
     this.index;
+    this.minIndex = 0;
+    this.maxIndex = 0;
     this.selected = false;
 
-    if ((left != null) && (right != null)) {
-        this.index = (right.index + left.index) / 2;
-    }
+
     this.isLeaf = function()
     {
         return ((this.left == undefined) && (this.right == undefined));
     };
+
+    this.setIndex = function(index)
+    {
+        if (index === undefined && (this.left != null) && (this.right != null)) {
+            this.index = (this.right.index + this.left.index) / 2;
+        }
+        else
+        {
+            this.index = index;
+        }
+    };
+
+    this.setMinIndex = function(index)
+    {
+        this.minIndex = index;
+    };
+
+    this.getMinIndex = function(index)
+    {
+        return this.minIndex;
+    };
+
+    this.setMaxIndex = function(index)
+    {
+        this.maxIndex = index;
+    };
+
+    this.getMaxIndex = function(index)
+    {
+        return this.maxIndex;
+    };
+
+    this.setIndex();
 };
 
 /*
@@ -630,28 +663,41 @@ jheatmap.readers.AtrGtrFileReader.prototype.read = function (result, initialize)
                         var leftNode = nodeIdToNodeMap[dataItems[1]];
                         var rightNode = nodeIdToNodeMap[dataItems[2]];
 
-                        nodeIdToNodeMap[dataItems[1]] = leftNode;
-                        nodeIdToNodeMap[dataItems[2]] = rightNode;
-
-                        var correlation = dataItems[3];
+                        var correlation = parseFloat(dataItems[3]);
 
                         if (lineCount == 0) {
                             maxCorrelation = correlation;
                         }
 
-                        if(leftNode === undefined)
-                        {
-                            leftNode = new jheatmap.utils.Node(dataItems[1]);
-                            leftNode.index = result.hcl.aidToIndex[dataItems[1]];
+                        var leftIndexId = dataItems[1];
+                        var rightIndexId = dataItems[2];
+                        if(leftNode === undefined) {
+                            leftNode = new jheatmap.utils.Node(leftIndexId);
+                            var leftIndex = result.hcl.aidToIndex[leftIndexId];
+
+                            leftNode.setIndex(leftIndex);
+                            leftNode.setMinIndex(leftIndex);
+                            leftNode.setMaxIndex(leftIndex);
                         }
 
                         if(rightNode == undefined)
                         {
-                            rightNode = new jheatmap.utils.Node(dataItems[2]);
-                            rightNode.index = result.hcl.aidToIndex[dataItems[2]];
+                            rightNode = new jheatmap.utils.Node(rightIndexId);
+                            var rightIndex = result.hcl.aidToIndex[rightIndexId];
+
+                            rightNode.setIndex(rightIndex);
+                            rightNode.setMinIndex(rightIndex);
+                            rightNode.setMaxIndex(rightIndex);
                         }
 
+                        nodeIdToNodeMap[leftIndexId] = leftNode;
+                        nodeIdToNodeMap[rightIndexId] = rightNode;
                         currentNode = new jheatmap.utils.Node(id, correlation, leftNode, rightNode, null);
+
+                        // set min and max indexes
+                        currentNode.setMinIndex(Math.min(rightNode.getMinIndex(), leftNode.getMinIndex()));
+                        currentNode.setMaxIndex(Math.max(rightNode.getMaxIndex(), leftNode.getMaxIndex()));
+
                         leftNode.parent = currentNode;
                         rightNode.parent = currentNode;
 
@@ -680,6 +726,7 @@ jheatmap.readers.AtrGtrFileReader.prototype.read = function (result, initialize)
             result.hcl.rootNode = currentNode;
             result.hcl.minCorrelation = minCorrelation;
             result.hcl.maxCorrelation = maxCorrelation;
+            result.hcl.nodeIdToNodeMap = nodeIdToNodeMap;
 
             result.ready = true;
             initialize.call(this);
@@ -2477,6 +2524,107 @@ jheatmap.actions.MutualExclusiveSort.prototype.columns = function() {
 };
 
 /**
+ * Flip dendrogram of rows or columns action.
+ *
+ * @example
+ * new jheatmap.actions.FlipDendrogram(heatmap);
+ *
+ * @param heatmap   The target heatmap
+ * @class
+ */
+jheatmap.actions.FlipDendrogram = function (heatmap) {
+    this.heatmap = heatmap;
+    //this.shortCut = "F";
+    //this.keyCodes = [83, 115];
+    this.title = "Flip Dendrogram";
+    this.icon = "fa-exchange";
+};
+
+/**
+ * Execute the action. *
+ * @private
+ */
+jheatmap.actions.FlipDendrogram.prototype.run = function (dimension)
+{
+    var recomputeIndices = function(node)
+    {
+        if(!node.isLeaf())
+        {
+            recomputeIndices(node.left);
+            recomputeIndices(node.right);
+            node.setIndex();
+            node.setMaxIndex(Math.max(node.left.getMaxIndex(), node.right.getMaxIndex()));
+            node.setMinIndex(Math.min(node.left.getMinIndex(), node.right.getMinIndex));
+        }
+    };
+
+    var flip = function(node, nodes, ids)
+    {
+        var tempLeftNode = node.left;
+        var rightNode = node.right;
+        node.right = tempLeftNode;
+        node.left = rightNode;
+
+        var min = node.getMinIndex();
+        var max = node.getMaxIndex();
+        var index = max;
+        var tempIds = ids;
+        for (var i = min; i <= max; i++)
+        {
+            var node = nodes[ids[i]];
+            node.setIndex(index);
+            node.setMaxIndex(index);
+            node.setMinIndex(index);
+            tempIds[i] = ids[index];
+            index--;
+        }
+        ids = tempIds;
+
+        return ids;
+    };
+
+    var ids = [];
+    var element_count = 0;
+    for (var e in dimension.hcl.aidToIndex) {
+        if (dimension.hcl.aidToIndex.hasOwnProperty(e)) element_count++;
+    }
+    for(var l=0;l<element_count;l++)
+    {
+        ids.push();
+    }
+    for (var p in dimension.hcl.aidToIndex) {
+        if (dimension.hcl.aidToIndex.hasOwnProperty(p))
+        {
+            var index = dimension.hcl.aidToIndex[p];
+            ids[index] = p;
+        }
+    }
+
+    var newList = flip(dimension.hcl.rootNode, dimension.hcl.nodeIdToNodeMap, ids);
+
+    var newOrder =[];
+    for(var i=0;i<newList.length;i++)
+    {
+        newOrder.push(dimension.hcl.nodeIdToNodeMap[newList[i]]);
+    }
+
+    //dimension.order = newOrder;
+    recomputeIndices(dimension.hcl.rootNode);
+};
+
+jheatmap.actions.FlipDendrogram.prototype.rows = function() {
+    this.run(this.heatmap.rows);
+    this.heatmap.rows.sorter.sort(this.heatmap, "rows");
+    this.heatmap.drawer.paint();
+};
+
+jheatmap.actions.FlipDendrogram.prototype.columns = function() {
+    this.run(this.heatmap.cols);
+    this.heatmap.cols.sorter.sort(this.heatmap, "columns");
+    this.heatmap.drawer.paint();
+};
+
+/**
  * Dummy action to create a menu separator
  *
  * @example
@@ -3295,6 +3443,28 @@ jheatmap.components.ColumnDendrogramPanel = function(drawer, heatmap)
 
     var eventTarget = this.canvas;
 
+    // Context menu
+    var action = new jheatmap.actions.FlipDendrogram(heatmap);
+
+    var menu = {
+        selector: 'canvas',
+        callback: function(key, options) {
+            //var action = heatmap.actions[key];
+            //if (action.columns != undefined) {
+            action.columns();
+            //}
+        },
+        items: {}
+    };
+
+    menu.items[0] = { name: action.title, icon: action.icon };
+
+    this.markup.contextMenu(menu);
+    this.canvas.bind('hold', function(e){
+        e.gesture.preventDefault();
+        $(this).contextMenu({ x: e.gesture.center.pageX, y: e.gesture.center.pageY });
+    });
+
     // Return true if the col is selected
     var isSelected = function(col) {
         return $.inArray(heatmap.cols.order[col], heatmap.cols.selected) > -1;
@@ -3308,14 +3478,6 @@ jheatmap.components.ColumnDendrogramPanel = function(drawer, heatmap)
         return e.gesture.center;
     };
 
-    // Select multiple rows or move the selected rows
-    var firstCol;
-    var firstX;
-    var firstZoom;
-    var doingPinch = false;
-    var lastMovedCol = null;
-    var movingSelection;
-
     this.canvas.bind('tap', function (e) {
         e.gesture.preventDefault();
         heatmap.focus.row = undefined;
@@ -3325,12 +3487,6 @@ jheatmap.components.ColumnDendrogramPanel = function(drawer, heatmap)
         var center = getCenter(e);
         heatmap.cols.hcl.lastClickX = center.x;
         heatmap.cols.hcl.lastClickY = center.y;
-        /*firstCol = center.col;
-        firstX = center.x;
-        firstZoom = heatmap.cols.zoom;*/
-
-        /*lastMovedCol = firstCol;
-        movingSelection = isSelected(firstCol);*/
         drawer.paint();
     });
 
@@ -3347,7 +3503,6 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
     }
 
     var cz = heatmap.cols.zoom;
-    var textSpacing = 5;
     var startCol = heatmap.offset.left;
     var endCol = heatmap.offset.right;
 
@@ -3485,7 +3640,6 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
             left.selected = false;
         }
 
-
         //check to see if right children of this node was selected
         //include 5 pixel tolerance
         if(!node.selected == true && lastClickX !== null && lastClickY !== null
@@ -3499,14 +3653,13 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
             right.selected = false;
         }
 
-
         if(node.selected == true)
         {
             context.strokeStyle = 'blue';
             right.selected = true;
             left.selected = true;
 
-            /*if(!isSelected(left.index))
+            if(!isSelected(left.index))
             {
                 heatmap.cols.selected.push(left.index);
             }
@@ -3514,7 +3667,7 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
             if(!isSelected(right.index))
             {
                 heatmap.cols.selected.push(right.index);
-            }*/
+            }
         }
         else
         {
@@ -5531,6 +5684,7 @@ jheatmap.HeatmapDimension = function (heatmap) {
         aidToIndex: {},
         minCorrelation: null,
         maxCorrelation: null,
+        nodeIdToNodeMap: null,
         lastClickX: null,
         lastClickY: null
     };
