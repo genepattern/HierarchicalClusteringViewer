@@ -2610,7 +2610,7 @@ jheatmap.actions.FlipDendrogram.prototype.run = function (dimension)
         }
     }
 
-    flip(dimension.hcl.rootNode, dimension, ids);
+    flip(dimension.hcl.selectedBranchNode, dimension, ids);
 };
 
 jheatmap.actions.FlipDendrogram.prototype.rows = function() {
@@ -3634,6 +3634,8 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
 
             lastClickX = null;
             lastClickY = null;
+
+            heatmap.cols.hcl.selectedBranchNode = left;
         }
         else
         {
@@ -3650,6 +3652,8 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
 
             lastClickX = null;
             lastClickY = null;
+
+            heatmap.cols.hcl.selectedBranchNode = right;
         }
         else
         {
@@ -5735,7 +5739,8 @@ jheatmap.HeatmapDimension = function (heatmap) {
         nodeIdToNodeMap: null,
         lastClickX: null,
         lastClickY: null,
-        selected: []
+        selected: [],
+        selectedBranchNode: null
     };
 };
 
