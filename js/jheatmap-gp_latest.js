@@ -2554,33 +2554,41 @@ jheatmap.actions.FlipDendrogram.prototype.run = function (dimension)
             recomputeIndices(node.right);
             node.setIndex();
             node.setMaxIndex(Math.max(node.left.getMaxIndex(), node.right.getMaxIndex()));
-            node.setMinIndex(Math.min(node.left.getMinIndex(), node.right.getMinIndex));
+            node.setMinIndex(Math.min(node.left.getMinIndex(), node.right.getMinIndex()));
         }
     };
 
-    var flip = function(node, nodes, ids)
+    var flip = function(selectedNode, dimension, ids)
     {
-        var tempLeftNode = node.left;
-        var rightNode = node.right;
-        node.right = tempLeftNode;
-        node.left = rightNode;
+        var nodes = dimension.hcl.nodeIdToNodeMap;
 
-        var min = node.getMinIndex();
-        var max = node.getMaxIndex();
+        var tempLeftNode = selectedNode.left;
+        var rightNode = selectedNode.right;
+        selectedNode.right = tempLeftNode;
+        selectedNode.left = rightNode;
+
+        var newOrder = dimension.order.slice();
+        var min = selectedNode.getMinIndex();
+        var max = selectedNode.getMaxIndex();
         var index = max;
-        var tempIds = ids;
+        var tempIds = {};
         for (var i = min; i <= max; i++)
         {
             var node = nodes[ids[i]];
             node.setIndex(index);
             node.setMaxIndex(index);
             node.setMinIndex(index);
-            tempIds[i] = ids[index];
+            tempIds[ids[index]] = i;
+            newOrder[index] = dimension.order[i];
+            newOrder[i] = dimension.order[index];
+            //newOrder[index]  = i;
             index--;
         }
-        ids = tempIds;
 
-        return ids;
+        dimension.hcl.aidToIndex = tempIds;
+
+        recomputeIndices(selectedNode);
+        dimension.order = newOrder;
     };
 
     var ids = [];
@@ -2592,6 +2600,8 @@ jheatmap.actions.FlipDendrogram.prototype.run = function (dimension)
     {
         ids.push();
     }
+
+    //create map of index to node
     for (var p in dimension.hcl.aidToIndex) {
         if (dimension.hcl.aidToIndex.hasOwnProperty(p))
         {
@@ -2600,16 +2610,7 @@ jheatmap.actions.FlipDendrogram.prototype.run = function (dimension)
         }
     }
 
-    var newList = flip(dimension.hcl.rootNode, dimension.hcl.nodeIdToNodeMap, ids);
-
-    var newOrder =[];
-    for(var i=0;i<newList.length;i++)
-    {
-        newOrder.push(dimension.hcl.nodeIdToNodeMap[newList[i]]);
-    }
-
-    //dimension.order = newOrder;
-    recomputeIndices(dimension.hcl.rootNode);
+    flip(dimension.hcl.rootNode, dimension, ids);
 };
 
 jheatmap.actions.FlipDendrogram.prototype.rows = function() {
@@ -3437,10 +3438,6 @@ jheatmap.components.ColumnDendrogramPanel = function(drawer, heatmap)
     this.canvas = $("<canvas class='dendrogram' id='colDendrogram' width='" + heatmap.size.width + "' height='"+heatmap.cols.labelSize+"'></canvas>");
     this.markup.append(this.canvas);
 
-    //keep track of last Clicked Location
-    this.lastClickX = "";
-    this.lastClickY = "";
-
     var eventTarget = this.canvas;
 
     // Context menu
@@ -3490,12 +3487,38 @@ jheatmap.components.ColumnDendrogramPanel = function(drawer, heatmap)
         drawer.paint();
     });
 
+    this.canvas.bind('mouseenter', function (e) {
+        e.preventDefault();
+
+        if (e.originalEvent.touches && e.originalEvent.touches.length > 1) {
+            return;
+        }
+
+        //enable display of the flip (i.e  dots) locations
+        heatmap.cols.hcl.showFlipLocations = true;
+
+        drawer.paint();
+    });
+
+    this.canvas.bind('mouseleave', function (e) {
+        e.preventDefault();
+
+        if (e.originalEvent.touches && e.originalEvent.touches.length > 1) {
+            return;
+        }
+
+        //enable display of the flip (i.e  dots) locations
+        heatmap.cols.hcl.showFlipLocations = false;
+
+        drawer.paint();
+    });
 };
 
 jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, offset_y) {
     var heatmap = this.heatmap;
     var lastClickX = heatmap.cols.hcl.lastClickX;
     var lastClickY = heatmap.cols.hcl.lastClickY;
+    var showFlipLocations = heatmap.cols.hcl.showFlipLocations;
 
     if(heatmap.cols.hcl.rootNode === null)
     {
@@ -3540,8 +3563,8 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
         return;
     }
 
-    var ymax = heatmap.cols.hcl.maxCorrelation;//0.969846;
-    var ymin = heatmap.cols.hcl.minCorrelation; //0.812395;
+    var ymax = heatmap.cols.hcl.maxCorrelation;
+    var ymin = heatmap.cols.hcl.minCorrelation;
     var bottomGutter = 4;
     var topGutter = 4;
     var yPixPerUnit = Math.max(canvas.height - bottomGutter - topGutter - 1, 1) / (ymax - ymin);
@@ -3568,39 +3591,13 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
 
     // Return true if the col is selected
     var isSelected = function(col) {
-        return $.inArray(heatmap.cols.order[col], heatmap.cols.selected) > -1;
+        return $.inArray(col, heatmap.cols.selected) > -1;
     };
 
     var drawSingleNode = function(context, node)
     {
-        /*Color color = node.getColor();
-        if (node.isSelected()) {
-            color = this.selectedColor;
-        }*/
         var  left = node.left;
         var right = node.right;
-        /*
-        // set up points for poly line
-        var rx = 0;
-        var lx = 0;
-        var ry = 0;
-        var ly = 0;
-        var elementWidth = 12;
-        if (right != null) {
-            rx = Math.ceil(8* (right.index * elementWidth) + elementWidth / 2.0);
-            ry = Math.ceil(9 * right.correlation);
-        }
-        if (left != null) {
-            lx = Math.ceil(8* (left.index * elementWidth) + elementWidth / 2.0);
-            ly = Math.ceil(9 * left.correlation);
-        }
-
-        if (subtractElementWidth) { // for aravind
-            lx -= elementWidth;
-            rx -= elementWidth;
-        }
-        var ty =Math.ceil(2 * node.correlation);
-        */
 
         var rx = 0;
         var lx = 0;
@@ -3632,9 +3629,12 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
         if(!node.selected == true && lastClickX !== null && lastClickY !== null
            && ((lastClickY >= ((canvasHeight - ly) - 5) && lastClickY <= ((canvasHeight - ly) + 5))
                 && (lastClickX >= (lx - 5) && lastClickX <= (lx + 5))))
-         {
-             left.selected = true;
-         }
+        {
+            left.selected = true;
+
+            lastClickX = null;
+            lastClickY = null;
+        }
         else
         {
             left.selected = false;
@@ -3647,32 +3647,73 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
                 && ((lastClickX >= (rx - 5) && lastClickX <= (rx + 5)))))
         {
             right.selected = true;
+
+            lastClickX = null;
+            lastClickY = null;
         }
         else
         {
             right.selected = false;
         }
 
-        if(node.selected == true)
+        if(showFlipLocations)
+        {
+            context.beginPath();
+            context.arc(rx, canvasHeight - ry, 5, 0, 2 * Math.PI, false);
+            context.fillStyle = "rgba(9,63,117,0.5)";
+            context.fill();
+
+            context.beginPath();
+            context.arc(lx, canvasHeight - ly, 5, 0, 2 * Math.PI, false);
+            context.fillStyle = "rgba(9,63,117,0.5)";
+            context.fill();
+        }
+
+        if(node.selected)
         {
             context.strokeStyle = 'blue';
             right.selected = true;
             left.selected = true;
+        }
 
-            if(!isSelected(left.index))
+        if(right.getMinIndex() === right.getMaxIndex())
+        {
+            var rIndex = $.inArray(right.minIndex, heatmap.cols.hcl.selected);
+
+            if(right.selected)
             {
-                heatmap.cols.selected.push(left.index);
+                if(rIndex == -1)
+                {
+                    heatmap.cols.hcl.selected.push(right.minIndex);
+                }
             }
-
-            if(!isSelected(right.index))
+            else
             {
-                heatmap.cols.selected.push(right.index);
+                if(rIndex !== -1)
+                {
+                    heatmap.cols.hcl.selected.splice(rIndex, 1);
+                }
             }
         }
-        else
+
+        if(left.getMinIndex() === left.getMaxIndex())
         {
-            //node.right.selected = false;
-            //node.left.selected = false;
+            var lIndex = $.inArray(left.minIndex, heatmap.cols.hcl.selected);
+
+            if(left.selected)
+            {
+                if(lIndex == -1)
+                {
+                    heatmap.cols.hcl.selected.push(left.minIndex);
+                }
+            }
+            else
+            {
+                if(lIndex !== -1)
+                {
+                    heatmap.cols.hcl.selected.splice(lIndex, 1);
+                }
+            }
         }
 
         context.lineWidth = 1;
@@ -3690,7 +3731,7 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
         context.lineTo(lx, canvasHeight - ly);
         context.stroke();
 
-        context.strokeStyle = 'black';
+        context.strokeStyle = "black";
 
         //highlight column of selected sample
         if (!node.selected && $.inArray(left.index, heatmap.cols.selected) > -1)
@@ -3728,6 +3769,13 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
     };
 
     draw(colCtx, heatmap.cols.hcl.rootNode);
+
+    if(heatmap.cols.hcl.selected.length !== 0)
+    {
+        heatmap.cols.selected = heatmap.cols.hcl.selected;
+    }
+
+    console.log("testing");
 };
 
 jheatmap.components.ColumnAnnotationPanel = function(drawer, heatmap)
@@ -5686,7 +5734,8 @@ jheatmap.HeatmapDimension = function (heatmap) {
         maxCorrelation: null,
         nodeIdToNodeMap: null,
         lastClickX: null,
-        lastClickY: null
+        lastClickY: null,
+        selected: []
     };
 };
 
