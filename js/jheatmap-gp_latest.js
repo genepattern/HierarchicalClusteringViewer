@@ -673,7 +673,7 @@ jheatmap.readers.AtrGtrFileReader.prototype.read = function (result, initialize)
                         var rightIndexId = dataItems[2];
                         if(leftNode === undefined) {
                             leftNode = new jheatmap.utils.Node(leftIndexId);
-                            var leftIndex = result.hcl.aidToIndex[leftIndexId];
+                            var leftIndex = result.hcl.idToIndex[leftIndexId];
 
                             leftNode.setIndex(leftIndex);
                             leftNode.setMinIndex(leftIndex);
@@ -683,7 +683,7 @@ jheatmap.readers.AtrGtrFileReader.prototype.read = function (result, initialize)
                         if(rightNode == undefined)
                         {
                             rightNode = new jheatmap.utils.Node(rightIndexId);
-                            var rightIndex = result.hcl.aidToIndex[rightIndexId];
+                            var rightIndex = result.hcl.idToIndex[rightIndexId];
 
                             rightNode.setIndex(rightIndex);
                             rightNode.setMinIndex(rightIndex);
@@ -776,6 +776,7 @@ jheatmap.readers.CDTFileReader.prototype.read = function (heatmap, initialize) {
 
     var aid = [];
     var eweight = [];
+    var gid = [];
 
     jQuery.ajax({
         url: url,
@@ -795,6 +796,7 @@ jheatmap.readers.CDTFileReader.prototype.read = function (heatmap, initialize) {
                     throw("Dataset is too large to load.");
                 }
 
+                var hasGID = false;
                 jQuery.each(lines, function (lineCount, line)
                 {
                     line = line.trim();
@@ -804,6 +806,12 @@ jheatmap.readers.CDTFileReader.prototype.read = function (heatmap, initialize) {
                         {
                             //parse the third line which contains the sample names
                             var headerLine = line.splitCSV(sep);
+
+                            if(headerLine[0] == "GID")
+                            {
+                                hasGID = true;
+                                headerLine.shift();
+                            }
                             headerLine.shift();
                             headerLine.shift();
                             headerLine.shift();
@@ -815,12 +823,12 @@ jheatmap.readers.CDTFileReader.prototype.read = function (heatmap, initialize) {
 
                             heatmap.cells.header = headerLine;
                         }
-                        else if(lineCount === 1)
+                        else if(!hasGID && lineCount === 1)
                         {
                             aid = line.splitCSV(sep);
                             aid.splice(0,3);
                         }
-                        else if(lineCount === 2)
+                        else if((hasGID && lineCount == 1) || (!hasGID && lineCount === 2))
                         {
                             eweight = line.splitCSV(sep);
                             eweight.splice(0,3);
@@ -828,6 +836,13 @@ jheatmap.readers.CDTFileReader.prototype.read = function (heatmap, initialize) {
                         else
                         {
                             var valLine = line.splitCSV(sep);
+
+                            if(hasGID)
+                            {
+                                var gidValue = valLine.shift();
+                                gid.push(gidValue);
+
+                            }
                             heatmap.cells.values[heatmap.cells.values.length] = valLine;
                         }
                     }
@@ -852,7 +867,15 @@ jheatmap.readers.CDTFileReader.prototype.read = function (heatmap, initialize) {
                 heatmap.cols.header = [];
             }
             heatmap.cols.header.unshift("Samples");
-            heatmap.cols.header.push("AID");
+
+            if(!hasGID)
+            {
+                heatmap.cols.header.push("AID");
+            }
+            else
+            {
+                heatmap.cols.header.push("GID");
+            }
             heatmap.cols.header.push("EWEIGHT");
 
 
@@ -868,10 +891,10 @@ jheatmap.readers.CDTFileReader.prototype.read = function (heatmap, initialize) {
 
                 heatmap.cols.values[i].unshift(heatmap.cells.header[i]);
 
-                if(aid != undefined && aid.length > i)
+                if(aid !== undefined && aid.length > i)
                 {
                     heatmap.cols.values[i].push(aid[i]);
-                    heatmap.cols.hcl.aidToIndex[aid[i]] = i;
+                    heatmap.cols.hcl.idToIndex[aid[i]] = i;
                 }
 
                 if(eweight != undefined && eweight.length > i)
@@ -907,6 +930,12 @@ jheatmap.readers.CDTFileReader.prototype.read = function (heatmap, initialize) {
                         sum += value;
                         count++;
                     }
+                }
+
+                if(gid !== undefined && gid.length > row)
+                {
+                    heatmap.rows.values[row].push(gid[row]);
+                    heatmap.rows.hcl.idToIndex[gid[row]] = row;
                 }
             }
 
@@ -2585,7 +2614,7 @@ jheatmap.actions.FlipDendrogram.prototype.run = function (dimension)
             index--;
         }
 
-        dimension.hcl.aidToIndex = tempIds;
+        dimension.hcl.idToIndex = tempIds;
 
         recomputeIndices(selectedNode);
         dimension.order = newOrder;
@@ -2593,8 +2622,8 @@ jheatmap.actions.FlipDendrogram.prototype.run = function (dimension)
 
     var ids = [];
     var element_count = 0;
-    for (var e in dimension.hcl.aidToIndex) {
-        if (dimension.hcl.aidToIndex.hasOwnProperty(e)) element_count++;
+    for (var e in dimension.hcl.idToIndex) {
+        if (dimension.hcl.idToIndex.hasOwnProperty(e)) element_count++;
     }
     for(var l=0;l<element_count;l++)
     {
@@ -2602,10 +2631,10 @@ jheatmap.actions.FlipDendrogram.prototype.run = function (dimension)
     }
 
     //create map of index to node
-    for (var p in dimension.hcl.aidToIndex) {
-        if (dimension.hcl.aidToIndex.hasOwnProperty(p))
+    for (var p in dimension.hcl.idToIndex) {
+        if (dimension.hcl.idToIndex.hasOwnProperty(p))
         {
-            var index = dimension.hcl.aidToIndex[p];
+            var index = dimension.hcl.idToIndex[p];
             ids[index] = p;
         }
     }
@@ -3302,11 +3331,11 @@ jheatmap.components.LegendPanel = function(drawer, heatmap)
 {
     this.heatmap = heatmap;
     // Create markup
-    this.markup = $("<tr >");
+    this.markup = $("<tr class='legend'>");
     this.width = 360;
     this.height = 70;
 
-    var legendCell = $("<td colspan='2'>");
+    var legendCell = $("<th colspan='3'>");
     this.bodyCanvas = $("<canvas width='" + (heatmap.size.width + heatmap.rows.labelSize + 16) + "'" + " height='" + this.height +"'" + "></canvas>");
     legendCell.append(this.bodyCanvas);
     this.markup.append(legendCell);
@@ -3522,6 +3551,9 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
 
     if(heatmap.cols.hcl.rootNode === null)
     {
+        //hide the dendrogram
+        $(this.markup).hide();
+
         return;
     }
 
@@ -3778,8 +3810,323 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
     {
         heatmap.cols.selected = heatmap.cols.hcl.selected;
     }
+};
 
-    console.log("testing");
+jheatmap.components.RowDendrogramPanel = function(drawer, heatmap)
+{
+    this.heatmap = heatmap;
+
+    // Create markup
+    this.markup = $("<th>");
+    this.canvas = $("<canvas class='dendrogram' id='rowDendrogram' width='" + heatmap.rows.labelSize + "' height='"+ heatmap.size.height + "'></canvas>");
+    this.markup.append(this.canvas);
+
+    var eventTarget = this.canvas;
+
+    // Context menu
+    var action = new jheatmap.actions.FlipDendrogram(heatmap);
+
+    var menu = {
+        selector: 'canvas',
+        callback: function(key, options) {
+            action.rows();
+        },
+        items: {}
+    };
+
+    menu.items[0] = { name: action.title, icon: action.icon };
+
+    this.markup.contextMenu(menu);
+    this.canvas.bind('hold', function(e){
+        e.gesture.preventDefault();
+        $(this).contextMenu({ x: e.gesture.center.pageX, y: e.gesture.center.pageY });
+    });
+
+    // Computes the relative to canvas x, y and the row
+    var getCenter = function (e) {
+        e.gesture.center.x = e.gesture.center.pageX - eventTarget.offset().left;
+        e.gesture.center.y = e.gesture.center.pageY - eventTarget.offset().top;
+        e.gesture.center.col = Math.floor(e.gesture.center.x / heatmap.cols.zoom) + heatmap.offset.left;
+        return e.gesture.center;
+    };
+
+    this.canvas.bind('tap', function (e) {
+        e.gesture.preventDefault();
+        heatmap.focus.row = undefined;
+        heatmap.focus.col = undefined;
+
+        e.gesture.preventDefault();
+        var center = getCenter(e);
+        heatmap.rows.hcl.lastClickX = center.x;
+        heatmap.rows.hcl.lastClickY = center.y;
+        drawer.paint();
+    });
+
+    this.canvas.bind('mouseenter', function (e) {
+        e.preventDefault();
+
+        if (e.originalEvent.touches && e.originalEvent.touches.length > 1) {
+            return;
+        }
+
+        //enable display of the flip (i.e  dots) locations
+        heatmap.rows.hcl.showFlipLocations = true;
+
+        drawer.paint();
+    });
+
+    this.canvas.bind('mouseleave', function (e) {
+        e.preventDefault();
+
+        if (e.originalEvent.touches && e.originalEvent.touches.length > 1) {
+            return;
+        }
+
+        //enable display of the flip (i.e  dots) locations
+        heatmap.rows.hcl.showFlipLocations = false;
+
+        drawer.paint();
+    });
+};
+
+jheatmap.components.RowDendrogramPanel.prototype.paint = function(context, offset_y)
+{
+    var heatmap = this.heatmap;
+    var lastClickX = heatmap.rows.hcl.lastClickX;
+    var lastClickY = heatmap.rows.hcl.lastClickY;
+    var showFlipLocations = heatmap.rows.hcl.showFlipLocations;
+
+    if(heatmap.rows.hcl.rootNode === null)
+    {
+        //hide the dendrogram
+        $(this.markup).hide();
+
+        return;
+    }
+    else
+    {
+        $(this.markup).show();
+    }
+
+    var cz = heatmap.rows.zoom;
+
+    var startRow = heatmap.offset.top;
+    var endRow = heatmap.offset.bottom;
+
+    var canvas = this.canvas.get()[0];
+    var rowCtx = canvas.getContext('2d');
+
+    var offset_x = 0;
+
+    if(context !== undefined && context !== null)
+    {
+        rowCtx = context;
+        // offset_x = this.canvas.offset().left;
+    }
+    else
+    {
+        offset_y = 0;
+        rowCtx.clearRect(0, 0, rowCtx.canvas.width, rowCtx.canvas.height);
+    }
+
+    rowCtx.fillStyle = 'white';
+    rowCtx.fillRect(offset_x, offset_y, rowCtx.canvas.width, rowCtx.canvas.height);
+
+    // Bug clear canvas workaround
+    androidBug39247 = function() {
+        canvas.style.opacity = 0.99;
+        setTimeout(function() {
+            canvas.style.opacity = 1;
+        }, 0.90); //1);
+    };
+
+    androidBug39247();
+
+    if(heatmap.rows.hcl === undefined)
+    {
+        return;
+    }
+
+    var xmax = heatmap.rows.hcl.maxCorrelation;
+    var xmin = heatmap.rows.hcl.minCorrelation;
+    var leftGutter = 4;
+    var rightGutter = 4;
+
+    var xPixPerUnit = Math.max(canvas.width - leftGutter - rightGutter - 1, 1) / (xmax - xmin);
+
+    // pixelMatrix[0] = xPixPerUnit;
+    var pixelMatrix = [];
+    pixelMatrix.push();
+    pixelMatrix.push();
+    pixelMatrix.push();
+    pixelMatrix.push();
+    pixelMatrix.push();
+    pixelMatrix.push();
+
+    pixelMatrix[0] = xPixPerUnit;
+    pixelMatrix[1] = 0;
+    pixelMatrix[2] = 0;
+    // pixelMatrix[3] = -yPixPerUnit;
+    pixelMatrix[4] = -xmin * xPixPerUnit + leftGutter;
+    // pixelMatrix[5] = ymax * yPixPerUnit + topGutter;
+
+    var  xToPix = function(x)
+    {
+        var pix = pixelMatrix[0] * x + pixelMatrix[4];
+        return Math.floor(pix);
+    };
+
+    var drawSingleNode = function(context, node)
+    {
+        var left = node.left;
+        var right = node.right;
+
+        var elementHeight = heatmap.rows.zoom;
+
+        // set up points for line
+        var ry = 0;
+        var ly = 0;
+        var rx = 0;
+        var lx = 0;
+        if (right != null) {
+            ry = Math.round(((right.index - startRow) * elementHeight) + elementHeight / 2.0);
+            rx = xToPix(right.correlation);
+        }
+        if (left != null) {
+            ly = Math.round(((left.index - startRow) * elementHeight) + elementHeight / 2.0);
+            lx = xToPix(left.correlation);
+        }
+        var tx = xToPix(node.correlation);
+        context.strokeStyle = "black";
+
+        //check to see if left children of this node was selected
+        //include 5 pixel tolerance
+        if(!node.selected == true && lastClickX !== null && lastClickY !== null
+            && ((lastClickY >= ((ly) - 5) && lastClickY <= ((ly) + 5))
+                && (lastClickX >= (lx - 5) && lastClickX <= (lx + 5))))
+        {
+            left.selected = true;
+
+            lastClickX = null;
+            lastClickY = null;
+
+            heatmap.rows.hcl.selectedBranchNode = left;
+        }
+        else
+        {
+            left.selected = false;
+        }
+
+        //check to see if right children of this node was selected
+        //include 5 pixel tolerance
+        if(!node.selected == true && lastClickX !== null && lastClickY !== null
+            && ((lastClickY >= ((ry) - 5) && lastClickY <= ((ry) + 5))
+                && ((lastClickX >= (rx - 5) && lastClickX <= (rx + 5)))))
+        {
+            right.selected = true;
+
+            lastClickX = null;
+            lastClickY = null;
+
+            heatmap.rows.hcl.selectedBranchNode = right;
+        }
+        else
+        {
+            right.selected = false;
+        }
+
+        if(showFlipLocations)
+        {
+            context.beginPath();
+            context.arc(rx, ry, 5, 0, 2 * Math.PI, false);
+            context.fillStyle = "rgba(9,63,117,0.5)";
+            context.fill();
+
+            context.beginPath();
+            context.arc(lx, ly, 5, 0, 2 * Math.PI, false);
+            context.fillStyle = "rgba(9,63,117,0.5)";
+            context.fill();
+        }
+
+        if(node.selected)
+        {
+            context.strokeStyle = 'blue';
+            right.selected = true;
+            left.selected = true;
+        }
+
+        if(right.getMinIndex() === right.getMaxIndex())
+        {
+            var rIndex = $.inArray(right.minIndex, heatmap.rows.hcl.selected);
+
+            if(right.selected)
+            {
+                if(rIndex == -1)
+                {
+                    heatmap.rows.hcl.selected.push(right.minIndex);
+                }
+            }
+            else
+            {
+                if(rIndex !== -1)
+                {
+                    heatmap.rows.hcl.selected.splice(rIndex, 1);
+                }
+            }
+        }
+
+        if(left.getMinIndex() === left.getMaxIndex())
+        {
+            var lIndex = $.inArray(left.minIndex, heatmap.rows.hcl.selected);
+
+            if(left.selected)
+            {
+                if(lIndex == -1)
+                {
+                    heatmap.rows.hcl.selected.push(left.minIndex);
+                }
+            }
+            else
+            {
+                if(lIndex !== -1)
+                {
+                    heatmap.rows.hcl.selected.splice(lIndex, 1);
+                }
+            }
+        }
+
+        context.lineWidth = 1;
+        context.beginPath();
+        context.moveTo(rx, ry);
+        context.lineTo(tx, ry);
+
+        context.lineTo(tx, ly);
+        context.lineTo(lx, ly);
+        context.stroke();
+
+        context.strokeStyle = "black";
+    };
+
+    var draw = function(context, node)
+    {
+        if(node === undefined)
+        {
+            return;
+        }
+
+        var left = node.left; //instance of a Node object
+        var right = node.right; //instance of a Node object
+
+        drawSingleNode(context, node);
+        if (left.isLeaf() === false) {
+            draw(context, left);
+        }
+        if (right.isLeaf() === false) {
+            draw(context, right);
+        }
+    };
+
+    draw(rowCtx, heatmap.rows.hcl.rootNode);
 };
 
 jheatmap.components.ColumnAnnotationPanel = function(drawer, heatmap)
@@ -5733,7 +6080,7 @@ jheatmap.HeatmapDimension = function (heatmap) {
      */
     this.hcl = {
         rootNode: null,
-        aidToIndex: {},
+        idToIndex: {},
         minCorrelation: null,
         maxCorrelation: null,
         nodeIdToNodeMap: null,
@@ -5798,6 +6145,7 @@ jheatmap.HeatmapDrawer = function (heatmap) {
     var columnDendrogramPanel = new jheatmap.components.ColumnDendrogramPanel(drawer, heatmap);
     var columnHeaderPanel = new jheatmap.components.ColumnHeaderPanel(drawer, heatmap);
     var columnAnnotationPanel = new jheatmap.components.ColumnAnnotationPanel(drawer, heatmap);
+    var rowDendrogramPanel = new jheatmap.components.RowDendrogramPanel(drawer, heatmap);
     var rowHeaderPanel = new jheatmap.components.RowHeaderPanel(drawer, heatmap);
     var rowAnnotationPanel = new jheatmap.components.RowAnnotationPanel(drawer, heatmap);
     var cellsBodyPanel = new jheatmap.components.CellBodyPanel(drawer, heatmap);
@@ -5822,6 +6170,7 @@ jheatmap.HeatmapDrawer = function (heatmap) {
 
         var dendrogramRow = $("<tr>");
         dendrogramRow.append("<th>");
+        dendrogramRow.append("<th>");
         dendrogramRow.append(columnDendrogramPanel.markup);
 
         table.append(dendrogramRow);
@@ -5829,6 +6178,7 @@ jheatmap.HeatmapDrawer = function (heatmap) {
         var firstRow = $("<tr>");
         table.append(firstRow);
 
+        firstRow.append("<th>");
         firstRow.append(controlPanel.markup);
 
         firstRow.append(columnHeaderPanel.markup);
@@ -5845,6 +6195,9 @@ jheatmap.HeatmapDrawer = function (heatmap) {
 
         // Add left border
         var tableRow = $('<tr>');
+
+        //add left dendrogram
+        tableRow.append(rowDendrogramPanel.markup);
 
         tableRow.append(rowHeaderPanel.markup);
 
@@ -5865,6 +6218,7 @@ jheatmap.HeatmapDrawer = function (heatmap) {
         }
 
         var scrollRow = $("<tr class='horizontalScroll'>");
+        scrollRow.append("<td>");
         scrollRow.append("<td class='border' style='font-size: 9px; vertical-align: right; padding-left: 10px; padding-top: 6px;'>" + poweredBy + "</td>");
 
         scrollRow.append(horizontalScrollBar.markup);
@@ -5971,6 +6325,9 @@ jheatmap.HeatmapDrawer = function (heatmap) {
 
         //Heatmap column dendrogram
         columnDendrogramPanel.paint(context, offsetY);
+
+        //Heatmap row dendrogram
+        rowDendrogramPanel.paint(context, offsetY);
 
         // Vertical scroll
         if(!hideScrollBars)
