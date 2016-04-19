@@ -1083,27 +1083,32 @@ gpVisual.HeatMap = function(options) {
         var atrFileAdded = function()
         {
             console.log("Add atr file");
-            self.drawHeatMap();
+            self.drawHeatMap({
+                showLegend: true
+            });
         };
 
         atrFileReader.read(gpHeatmap.cols, atrFileAdded);
     };
 
-    this.loadGtrFile = function(atrFile)
+    this.loadGtrFile = function(gtrFile)
     {
         var gtrFileReader = new jheatmap.readers.AtrGtrFileReader(
             {
-                url: atrFile,
+                url: gtrFile,
                 handleError: function(status)
                 {
                     if(status)
-                        console.log("Failed to load atr file: " + status.error);
+                        console.log("Failed to load gtr file: " + status.error);
                 }
             });
 
         var gtrFileAdded = function()
         {
             console.log("Add gtr file");
+            self.drawHeatMap({
+                showLegend: true
+            });
         };
 
         gtrFileReader.read(gpHeatmap.rows, gtrFileAdded);
