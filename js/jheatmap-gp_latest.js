@@ -607,7 +607,7 @@ jheatmap.readers.AtrGtrFileReader = function (p) {
  * @param {function}    initialize  A callback function that is called when the file is loaded.
  *
  */
-jheatmap.readers.AtrGtrFileReader.prototype.read = function (result, initialize)
+jheatmap.readers.AtrGtrFileReader.prototype.read = function (result, initialize, heatmap)
 {
     var sep = this.separator;
     var url = this.url;
@@ -728,6 +728,10 @@ jheatmap.readers.AtrGtrFileReader.prototype.read = function (result, initialize)
             result.hcl.maxCorrelation = maxCorrelation;
             result.hcl.nodeIdToNodeMap = nodeIdToNodeMap;
 
+            if(heatmap.rows.hcl !== undefined)
+            {
+                heatmap.size.width = heatmap.size.width - 258;
+            }
             result.ready = true;
             initialize.call(this);
         }
@@ -872,7 +876,7 @@ jheatmap.readers.CDTFileReader.prototype.read = function (heatmap, initialize) {
             }
             heatmap.cols.header.unshift("Samples");
 
-            if(!hasGID)
+           /* if(!hasGID)
             {
                 heatmap.cols.header.push("AID");
             }
@@ -881,7 +885,7 @@ jheatmap.readers.CDTFileReader.prototype.read = function (heatmap, initialize) {
                 heatmap.cols.header.push("GID");
             }
             heatmap.cols.header.push("EWEIGHT");
-
+            */
 
             if (heatmap.cols.values == undefined ) {
                 heatmap.cols.values = [];
@@ -897,14 +901,14 @@ jheatmap.readers.CDTFileReader.prototype.read = function (heatmap, initialize) {
 
                 if(aid !== undefined && aid.length > i)
                 {
-                    heatmap.cols.values[i].push(aid[i]);
+                   // heatmap.cols.values[i].push(aid[i]);
                     heatmap.cols.hcl.idToIndex[aid[i]] = i;
                 }
 
-                if(eweight != undefined && eweight.length > i)
+                /*if(eweight != undefined && eweight.length > i)
                 {
                     heatmap.cols.values[i].push(eweight[i]);
-                }
+                }*/
             }
 
             var count = 0;
@@ -3344,8 +3348,8 @@ jheatmap.components.LegendPanel = function(drawer, heatmap)
         dendrogramWidth = heatmap.rows.labelSize;
     }
 
-    var legendCell = $("<th colspan='3'>");
-    this.bodyCanvas = $("<canvas width='" + (heatmap.size.width + heatmap.rows.labelSize + 16) + "'" + " height='" + this.height +"'" + "></canvas>");
+    var legendCell = $("<th colspan='2' style='border: none;text-align:left'>");
+    this.bodyCanvas = $("<canvas width='" + this.width + "'" + " height='" + this.height +"'" + "></canvas>");
     legendCell.append(this.bodyCanvas);
     this.markup.append(legendCell);
 };
@@ -3473,9 +3477,11 @@ jheatmap.components.ColumnDendrogramPanel = function(drawer, heatmap)
 
     // Create markup
     this.markup = $("<tr>");
-    this.markup.append("<th>");
+    this.markup.append("<th style='border-left: none;border-bottom: none;'>");
+    var th = $("<th>");
+    this.markup.append(th);
     this.canvas = $("<canvas class='dendrogram' id='colDendrogram' width='" + heatmap.size.width + "' height='"+heatmap.cols.labelSize+"'></canvas>");
-    this.markup.append(this.canvas);
+    th.append(this.canvas);
 
     var eventTarget = this.canvas;
 
@@ -3920,14 +3926,13 @@ jheatmap.components.RowDendrogramPanel.prototype.paint = function(context, offse
         $(".rowDendSpacer").show();
     }
 
-    var cz = heatmap.rows.zoom;
+    var rz = heatmap.rows.zoom;
 
     var startRow = heatmap.offset.top;
     var endRow = heatmap.offset.bottom;
 
     var canvas = this.canvas.get()[0];
     var rowCtx = canvas.getContext('2d');
-
     var offset_x = 0;
 
     if(context !== undefined && context !== null)
@@ -4117,6 +4122,22 @@ jheatmap.components.RowDendrogramPanel.prototype.paint = function(context, offse
         context.stroke();
 
         context.strokeStyle = "black";
+
+        //highlight column of selected sample
+        if (!node.selected && $.inArray(left.index, heatmap.rows.selected) > -1)
+        {
+
+            context.fillStyle = "rgba(0,0,0,0.1)";
+            rowCtx.fillRect(0 + offset_x, ((left.index - startRow) * rz) + offset_y, heatmap.rows.labelSize, rz);
+            context.fillStyle = "black";
+        }
+
+        if (!node.selected && $.inArray(right.index, heatmap.rows.selected) > -1)
+        {
+            context.fillStyle = "rgba(0,0,0,0.1)";
+            rowCtx.fillRect(0 + offset_x, ((right.index - startRow) * rz) + offset_y, heatmap.rows.labelSize, rz);
+            context.fillStyle = "black";
+        }
     };
 
     var draw = function(context, node)
@@ -4139,6 +4160,11 @@ jheatmap.components.RowDendrogramPanel.prototype.paint = function(context, offse
     };
 
     draw(rowCtx, heatmap.rows.hcl.rootNode);
+
+    if(heatmap.rows.hcl.selected.length !== 0)
+    {
+        heatmap.rows.selected = heatmap.rows.hcl.selected;
+    }
 };
 
 jheatmap.components.ColumnAnnotationPanel = function(drawer, heatmap)
@@ -4216,9 +4242,6 @@ jheatmap.components.ColumnAnnotationPanel = function(drawer, heatmap)
         details.bind('click', function () {
             $(this).css('display', 'none');
         });
-
-
-
     });
 
     this.canvasHeader.click(function (e) {
@@ -4282,7 +4305,8 @@ jheatmap.components.ColumnAnnotationPanel.prototype.paint = function(context, of
             colAnnHeaderCtx.restore();
         }
 
-        var colAnnValuesCtx = this.canvasBody.get()[0].getContext('2d');
+        var canvasBody = this.canvasBody.get()[0];
+        var colAnnValuesCtx = canvasBody.getContext('2d');
         if(context !== undefined && context !== null)
         {
             colAnnValuesCtx = context;
@@ -6175,18 +6199,18 @@ jheatmap.HeatmapDrawer = function (heatmap) {
         }
 
         table.append(columnDendrogramPanel.markup);
-        var rowDendSpacer = $("<th class='rowDenSpacer'>");
+        var rowDendSpacer = $("<th class='rowDendSpacer' style='border: none;'>");
         columnDendrogramPanel.markup.prepend(rowDendSpacer);
         rowDendSpacer.hide();
 
         var firstRow = $("<tr>");
         table.append(firstRow);
 
-        firstRow.append(controlPanel.markup);
-
-        rowDendSpacer = $("<th class='rowDenSpacer'>");
+        rowDendSpacer = $("<th class='rowDendSpacer'>");
         firstRow.append(rowDendSpacer);
         rowDendSpacer.hide();
+
+        firstRow.append(controlPanel.markup);
 
         firstRow.append(columnHeaderPanel.markup);
 
@@ -6198,6 +6222,7 @@ jheatmap.HeatmapDrawer = function (heatmap) {
 
         if (columnAnnotationPanel.visible) {
             table.append(columnAnnotationPanel.markup);
+            columnAnnotationPanel.markup.prepend("<th class='rowDendSpacer'>");
         }
 
         // Add left border
@@ -6226,6 +6251,10 @@ jheatmap.HeatmapDrawer = function (heatmap) {
         var scrollRow = $("<tr class='horizontalScroll'>");
         scrollRow.append("<td class='border' " +
             "style='font-size: 9px; vertical-align: right; padding-left: 10px; padding-top: 6px;'>" + poweredBy + "</td>");
+
+        rowDendSpacer = $("<th class='rowDendSpacer'>");
+        scrollRow.append(rowDendSpacer);
+        rowDendSpacer.hide();
 
         scrollRow.append(horizontalScrollBar.markup);
         scrollRow.append("<td class='border'></td>");
@@ -6264,6 +6293,13 @@ jheatmap.HeatmapDrawer = function (heatmap) {
      * Paint the heatmap.
      */
     this.paint = function (context, hideScrollBars) {
+
+        //var originalHeatmapWidth = heatmap.size.width;
+        //the width needs to be re-adjusted for the row dendrograms
+        /*if(heatmap.rows.ready && !$(".rowDendSpacer").is(":visible") && heatmap.rows.hcl !== undefined)
+        {
+            heatmap.size.width = heatmap.size.width - rowDendrogramPanel.canvas.width();
+        }*/
 
         // Minimum zooms
         var mcz = Math.max(3, Math.round(heatmap.size.width / heatmap.cols.order.length));
@@ -6307,14 +6343,7 @@ jheatmap.HeatmapDrawer = function (heatmap) {
 
         var offsetY = legendPanel.height;
 
-        //Heatmap column dendrogram
-        columnDendrogramPanel.paint(context,
-                cellsBodyPanel.canvas.height() + columnHeaderPanel.canvas.height() - 40);
-
         offsetY = offsetY + columnDendrogramPanel.canvas.height();
-
-        // Column headers panel
-        columnHeaderPanel.paint(context, offsetY);
 
         offsetY = offsetY + columnHeaderPanel.canvas.height();
 
@@ -6330,15 +6359,9 @@ jheatmap.HeatmapDrawer = function (heatmap) {
         // Columns annotations
         columnAnnotationPanel.paint(context, offsetY);
 
-        offsetY = offsetY + columnAnnotationPanel.canvasBody.height();
-
-        // Cells
-        cellsBodyPanel.paint(context, offsetY);
 
         //Heatmap Legend
         legendPanel.paint(context);
-
-
 
         // Vertical scroll
         if(!hideScrollBars)
@@ -6351,6 +6374,16 @@ jheatmap.HeatmapDrawer = function (heatmap) {
         {
             horizontalScrollBar.paint(context);
         }
+
+        //Heatmap column dendrogram
+        columnDendrogramPanel.paint(context, cellsBodyPanel.canvas.height() + + columnHeaderPanel.canvas.height());
+                //cellsBodyPanel.canvas.height() + columnHeaderPanel.canvas.height() - 40);
+
+        // Column headers panel
+        columnHeaderPanel.paint(context, columnDendrogramPanel.canvas.height() + legendPanel.bodyCanvas.height());
+
+        // Cells
+        cellsBodyPanel.paint(context, offsetY + columnAnnotationPanel.canvasBody.height());
     };
 
     /**
