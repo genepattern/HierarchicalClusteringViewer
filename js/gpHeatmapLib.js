@@ -970,7 +970,7 @@ gpVisual.HeatMap = function(options) {
                 widthAdjustment = 520;
             }
 
-            context = new C2S(gpHeatmap.size.width + widthAdjustment, gpHeatmap.size.height + 350);
+            context = new C2S(gpHeatmap.size.width + widthAdjustment, gpHeatmap.size.height + 373);
 
             var hRes = new jheatmap.HeatmapDrawer(gpHeatmap);
             hRes.build();
@@ -1007,7 +1007,7 @@ gpVisual.HeatMap = function(options) {
                 widthAdjustment = 520;
             }
 
-            var context = new C2S(gpHeatmap.size.width + widthAdjustment, gpHeatmap.size.height + 350);
+            var context = new C2S(gpHeatmap.size.width + widthAdjustment, gpHeatmap.size.height + 373);
 
             var hRes = new jheatmap.HeatmapDrawer(gpHeatmap);
             hRes.build();
