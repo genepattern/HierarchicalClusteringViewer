@@ -2,7 +2,7 @@
 #Mon Apr 04 06:09:36 EDT 2016
 JVMLevel=1.5
 LSID=urn\:lsid\:broad.mit.edu\:cancer.software.genepattern.module.visualizer\:00031\:999999999
-author=Joshua Gould, Broad Institute
+author=Marc-Danie Nazaire, Broad Institute
 commandLine=hclViewer.html ? <cdt.file> <gtr.file> <atr.file>
 cpuType=any
 description=Views results of hierarchical clustering.
