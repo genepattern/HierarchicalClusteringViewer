@@ -964,7 +964,13 @@ gpVisual.HeatMap = function(options) {
             gpHeatmap.size.height = imageHeight; // / 2;
             gpHeatmap.size.width = imageWidth;
 
-            context = new C2S(gpHeatmap.size.width + 520, gpHeatmap.size.height + 350);
+            var widthAdjustment = 300;
+            if(gpHeatmap.rows.hcl.rootNode !== null)
+            {
+                widthAdjustment = 520;
+            }
+
+            context = new C2S(gpHeatmap.size.width + widthAdjustment, gpHeatmap.size.height + 350);
 
             var hRes = new jheatmap.HeatmapDrawer(gpHeatmap);
             hRes.build();
@@ -995,7 +1001,13 @@ gpVisual.HeatMap = function(options) {
             gpHeatmap.size.height = imageHeight; // / 2;
             gpHeatmap.size.width = imageWidth;
 
-            var context = new C2S(gpHeatmap.size.width + 520, gpHeatmap.size.height + 350);
+            var widthAdjustment = 360;
+            if(gpHeatmap.rows.hcl.rootNode !== null)
+            {
+                widthAdjustment = 520;
+            }
+
+            var context = new C2S(gpHeatmap.size.width + widthAdjustment, gpHeatmap.size.height + 350);
 
             var hRes = new jheatmap.HeatmapDrawer(gpHeatmap);
             hRes.build();

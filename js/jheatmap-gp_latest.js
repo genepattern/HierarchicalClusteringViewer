@@ -6399,7 +6399,7 @@ jheatmap.HeatmapDrawer = function (heatmap) {
         }
 
         //Heatmap column dendrogram
-        columnDendrogramPanel.paint(context, cellsBodyPanel.canvas.height() + + columnHeaderPanel.canvas.height());
+        columnDendrogramPanel.paint(context, cellsBodyPanel.canvas.height() + + columnHeaderPanel.canvas.height() - 10);
                 //cellsBodyPanel.canvas.height() + columnHeaderPanel.canvas.height() - 40);
 
         // Column headers panel
