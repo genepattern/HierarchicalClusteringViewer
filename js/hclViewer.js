@@ -94,6 +94,10 @@ var HCLViewer = function() {
             },
             container: $("#hclViewer"),
             showLegend: true,
+            maximizeWidth: true,
+            controls: {
+                columnSelector: false
+            },
             onLoadData: function(status)
             {
                 if(status !== undefined && status.error !== undefined)
@@ -335,7 +339,7 @@ var HCLViewer = function() {
 
         $("#resetZoom").button().click(function(event)
         {
-            var defaultZoomLevel = heatMap.getDefaultColZoomLevel();
+            var defaultZoomLevel = heatMap.getDefaultRowZoomLevel();
             heatMap.zoom(defaultZoomLevel);
         });
 
@@ -434,7 +438,9 @@ var HCLViewer = function() {
                              value: false
                              });*/
 
-                            var success = heatMap.saveImage(imageFileName, imageFormat);
+                            var allFeatures = $("#allFeatures").is(":checked");
+
+                            var success = heatMap.saveImage(imageFileName, imageFormat, allFeatures);
                             // $("#loadingImage").remove();
 
                             if(success)

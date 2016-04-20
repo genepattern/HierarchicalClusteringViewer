@@ -728,9 +728,10 @@ jheatmap.readers.AtrGtrFileReader.prototype.read = function (result, initialize,
             result.hcl.maxCorrelation = maxCorrelation;
             result.hcl.nodeIdToNodeMap = nodeIdToNodeMap;
 
-            if(heatmap.rows.hcl !== undefined)
+            //if(rowDendJustDefined)
+            if(heatmap.rows.hcl.rootNode !== null)
             {
-                heatmap.size.width = heatmap.size.width - 258;
+                heatmap.size.width = heatmap.size.width - 235;
             }
             result.ready = true;
             initialize.call(this);
@@ -3233,6 +3234,11 @@ jheatmap.components.CellBodyPanel.prototype.paint = function(context, offsetY)
         cellCtx = context;
 
         offset_x = this.canvas.offset().left;
+
+        if(heatmap.rows.hcl !== undefined)
+        {
+            offset_x -= 10;
+        }
     }
     else
     {
@@ -3341,12 +3347,6 @@ jheatmap.components.LegendPanel = function(drawer, heatmap)
     this.markup = $("<tr class='legend'>");
     this.width = 360;
     this.height = 70;
-
-    var dendrogramWidth = 0;
-    if(heatmap.rows.hcl !== undefined)
-    {
-        dendrogramWidth = heatmap.rows.labelSize;
-    }
 
     var legendCell = $("<th colspan='2' style='border: none;text-align:left'>");
     this.bodyCanvas = $("<canvas width='" + this.width + "'" + " height='" + this.height +"'" + "></canvas>");
@@ -3586,6 +3586,11 @@ jheatmap.components.ColumnDendrogramPanel.prototype.paint = function(context, of
     {
         colCtx = context;
         offset_x = this.canvas.offset().left;
+
+        if(heatmap.rows.hcl !== undefined)
+        {
+            offset_x -= 10;
+        }
     }
     else
     {
@@ -4271,7 +4276,10 @@ jheatmap.components.ColumnAnnotationPanel.prototype.paint = function(context, of
         {
             colAnnHeaderCtx = context;
             offset_x = this.canvasHeader.offset().left - 2;
-            //offset_y = this.canvasHeader.offset().top;
+            if(heatmap.rows.hcl !== undefined)
+            {
+                offset_x -= 10;
+            }
         }
         else
         {
@@ -4618,7 +4626,10 @@ jheatmap.components.ColumnHeaderPanel.prototype.paint = function(context, offset
     {
         colCtx = context;
         offset_x = this.canvas.offset().left;
-        //offset_y = this.canvas.offset().top;
+        if(heatmap.rows.hcl !== undefined)
+        {
+            offset_x -= 10;
+        }
     }
     else
     {
@@ -5102,6 +5113,11 @@ jheatmap.components.RowAnnotationPanel.prototype.paint = function(context, offse
         {
             annRowHeadCtx = context;
             offset_x = this.headerCanvas.offset().left - 6;
+            if(heatmap.rows.hcl !== undefined)
+            {
+                offset_x -= 10;
+            }
+
             offset_y = offset_y + 10;
         }
         else
@@ -5474,6 +5490,11 @@ jheatmap.components.RowHeaderPanel.prototype.paint = function(context, offset_y)
     {
         rowCtx = context;
         offset_x = this.canvas.offset().left;
+
+        if(heatmap.rows.hcl !== undefined)
+        {
+            offset_x -= 10;
+        }
     }
     else
     {
@@ -6292,7 +6313,7 @@ jheatmap.HeatmapDrawer = function (heatmap) {
     /**
      * Paint the heatmap.
      */
-    this.paint = function (context, hideScrollBars) {
+    this.paint = function (context, hideScrollBars, doNotUpdateZoom) {
 
         //var originalHeatmapWidth = heatmap.size.width;
         //the width needs to be re-adjusted for the row dendrograms
@@ -6305,17 +6326,19 @@ jheatmap.HeatmapDrawer = function (heatmap) {
         var mcz = Math.max(3, Math.round(heatmap.size.width / heatmap.cols.order.length));
         var mrz = Math.max(3, Math.round(heatmap.size.height / heatmap.rows.order.length));
 
-        // Zoom columns
-        var cz = heatmap.cols.zoom;
-        cz = cz < mcz ? mcz : cz;
-        cz = cz > 64 ? 64 : cz;
-        heatmap.cols.zoom = cz;
+        if(doNotUpdateZoom === undefined || !doNotUpdateZoom)
+        {   // Zoom columns
+            var cz = heatmap.cols.zoom;
+            cz = cz < mcz ? mcz : cz;
+            cz = cz > 64 ? 64 : cz;
+            heatmap.cols.zoom = cz;
 
-        // Zoom rows
-        var rz = heatmap.rows.zoom;
-        rz = rz < mrz ? mrz : rz;
-        rz = rz > 64 ? 64 : rz;
-        heatmap.rows.zoom = rz;
+            // Zoom rows
+            var rz = heatmap.rows.zoom;
+            rz = rz < mrz ? mrz : rz;
+            rz = rz > 64 ? 64 : rz;
+            heatmap.rows.zoom = rz;
+        }
 
         var maxCols = Math.min(heatmap.cols.order.length, Math.round(heatmap.size.width / cz) + 1);
         var maxRows = Math.min(heatmap.rows.order.length, Math.round(heatmap.size.height / rz) + 1);

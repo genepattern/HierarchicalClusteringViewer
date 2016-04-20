@@ -54,7 +54,9 @@ gpVisual.HeatMap = function(options) {
         //height of the column labels
         gpHeatmap.cols.labelSize = 150;
 
-        gpHeatmap.size.width = bodyWidth - 265; //- 300; //1100;
+        if(options.maximizeWidth !== undefined && options.maximizeWidth) {
+            gpHeatmap.size.width = bodyWidth - 265; // 480; //- 300; //1100;
+        }
 
         if(options.width !== undefined && !isNaN(options.width))
         {
@@ -962,7 +964,7 @@ gpVisual.HeatMap = function(options) {
             gpHeatmap.size.height = imageHeight; // / 2;
             gpHeatmap.size.width = imageWidth;
 
-            context = new C2S(gpHeatmap.size.width + 300, gpHeatmap.size.height + 350);
+            context = new C2S(gpHeatmap.size.width + 520, gpHeatmap.size.height + 350);
 
             var hRes = new jheatmap.HeatmapDrawer(gpHeatmap);
             hRes.build();
@@ -970,7 +972,7 @@ gpVisual.HeatMap = function(options) {
 
             var svg = context.getSerializedSvg();
 
-            $("#gpHeatMap_imageRenderCanvas").attr("width", gpHeatmap.size.width + 300);
+            $("#gpHeatMap_imageRenderCanvas").attr("width", gpHeatmap.size.width + 540);
             $("#gpHeatMap_imageRenderCanvas").attr("height", gpHeatmap.size.height + 350);
 
             canvg(document.getElementById('gpHeatMap_imageRenderCanvas'), svg);
@@ -993,7 +995,7 @@ gpVisual.HeatMap = function(options) {
             gpHeatmap.size.height = imageHeight; // / 2;
             gpHeatmap.size.width = imageWidth;
 
-            var context = new C2S(gpHeatmap.size.width + 360, gpHeatmap.size.height + 350);
+            var context = new C2S(gpHeatmap.size.width + 520, gpHeatmap.size.height + 350);
 
             var hRes = new jheatmap.HeatmapDrawer(gpHeatmap);
             hRes.build();
@@ -1082,13 +1084,14 @@ gpVisual.HeatMap = function(options) {
 
         var atrFileAdded = function()
         {
-            console.log("Add atr file");
+            console.log("Added atr file");
             self.drawHeatMap({
-                showLegend: true
+                showLegend: true,
+                showScrollBars: true
             });
         };
 
-        atrFileReader.read(gpHeatmap.cols, atrFileAdded);
+        atrFileReader.read(gpHeatmap.cols, atrFileAdded, gpHeatmap);
     };
 
     this.loadGtrFile = function(gtrFile)
@@ -1105,12 +1108,14 @@ gpVisual.HeatMap = function(options) {
 
         var gtrFileAdded = function()
         {
-            console.log("Add gtr file");
+            console.log("Added gtr file");
+
             self.drawHeatMap({
-                showLegend: true
+                showLegend: true,
+                showScrollBars: true
             });
         };
 
-        gtrFileReader.read(gpHeatmap.rows, gtrFileAdded);
+        gtrFileReader.read(gpHeatmap.rows, gtrFileAdded, gpHeatmap);
     };
 };
